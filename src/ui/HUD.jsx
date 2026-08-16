@@ -53,6 +53,10 @@ function Ammo() {
 
 function Prompt() {
   const prompt = useGame((s) => s.prompt)
+  const kind = useGame((s) => s.promptKind)
+  const touch = useGame((s) => s.touch)
+  // The on-screen buttons carry their own labels, so keyboard hints are noise.
+  if (touch && kind !== 'hint') return null
   return <div className="hud-panel hud-prompt">{prompt}</div>
 }
 
@@ -75,9 +79,10 @@ function MuteButton() {
 
 export default function HUD({ world }) {
   const phase = useGame((s) => s.phase)
+  const touch = useGame((s) => s.touch)
   if (phase !== 'playing') return null
   return (
-    <div className="hud">
+    <div className={`hud${touch ? ' touch' : ''}`}>
       <Score />
       <Wanted />
       <Ammo />

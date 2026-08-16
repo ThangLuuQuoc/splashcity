@@ -10,6 +10,12 @@ export const input = {
   spray: false,
   locked: false,
   dragging: false,
+
+  // Analog stick, -1..1 each. Touch writes these; the keyboard leaves them at
+  // zero and falls through to the digital keys below.
+  moveX: 0, // + is right / steer right
+  moveY: 0, // + is forward
+  touchActive: false,
 }
 
 const pressed = new Set()
@@ -25,6 +31,41 @@ export function keyPressed(code) {
     return true
   }
   return false
+}
+
+// --- movement axes -------------------------------------------------------
+// Systems read these instead of the raw keys so a thumbstick can give analog
+// steering and a walking pace, while the keyboard still reads as full deflection.
+
+/** Forward / back. +1 is forward. */
+export function axisForward() {
+  const keys = (keyDown('KeyW') ? 1 : 0) - (keyDown('KeyS') ? 1 : 0)
+  return keys !== 0 ? keys : input.moveY
+}
+
+/** Strafe / steer. +1 is right. */
+export function axisRight() {
+  const keys = (keyDown('KeyD') ? 1 : 0) - (keyDown('KeyA') ? 1 : 0)
+  return keys !== 0 ? keys : input.moveX
+}
+
+// --- virtual keys --------------------------------------------------------
+// On-screen buttons push real key codes into the same set the keyboard uses, so
+// no gameplay system needs to know whether a finger or a key produced them.
+
+export function virtualHold(code, held) {
+  if (held) input.keys.add(code)
+  else input.keys.delete(code)
+}
+
+/**
+ * A momentary press. Latched briefly rather than released immediately: a fast
+ * tap could otherwise start and end inside one frame and be missed entirely by
+ * the edge-triggered keyPressed().
+ */
+export function virtualTap(code, ms = 120) {
+  input.keys.add(code)
+  setTimeout(() => input.keys.delete(code), ms)
 }
 
 export function endFrame() {

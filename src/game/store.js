@@ -9,12 +9,15 @@ export const useGame = create((set) => ({
   heat: 0,
   ammo: 0,
   prompt: '',
+  promptKind: 'controls', // 'hint' = worth showing even on touch
   cooling: false,
   copsNear: 0,
   busted: null, // { lost, kept }
   stats: { splashed: 0, bumped: 0, tagged: 0, busted: 0 },
   muted: false,
+  touch: false, // on-screen controls are showing
 
+  setTouch: (touch) => set((s) => (s.touch === touch ? s : { touch })),
   setPhase: (phase) => set({ phase }),
   setBusted: (busted) => set({ busted }),
   toggleMute: () => set((s) => ({ muted: !s.muted })),

@@ -167,38 +167,43 @@ export function updateActions(world, dt) {
 /** Contextual hint shown at the bottom of the screen. */
 export function updatePrompt(world) {
   const p = world.player
+  // `kind` separates hints about the world ("a train is here, board it") from
+  // ones that merely list the controls. On a touchscreen the on-screen buttons
+  // are already labelled, so only the former are worth showing.
+  const set = (text, kind) => {
+    world.prompt = text
+    world.promptKind = kind
+  }
 
   if (p.mode === 'train') {
     const train = world.trains[p.train]
     const station = train && dwellingStation(world, train)
-    world.prompt = station
-      ? `${station.name} — E to get off • Click throw`
-      : 'Riding the Skyline • E to hop off • Click throw'
-    return
+    return station
+      ? set(`${station.name} — this is your stop`, 'hint')
+      : set('Riding the Skyline', 'hint')
   }
 
   if (p.mode === 'car') {
-    world.prompt = 'E get out • Space handbrake • Click throw'
-    return
+    return set('E get out • Space handbrake • Click throw', 'controls')
   }
 
   if (findBoardableCar(world)) {
-    world.prompt = 'Press E to board the train'
-    return
+    return set('Board the train', 'hint')
   }
   for (let i = 0; i < world.cars.length; i++) {
     const c = world.cars[i]
     if (Math.hypot(c.x - p.x, c.z - p.z) < 4.2) {
-      world.prompt = 'Press E to get in the car'
-      return
+      return set('Get in the car', 'hint')
     }
   }
   for (let i = 0; i < world.fountains.length; i++) {
     const f = world.fountains[i]
     if (Math.hypot(f.x - p.x, f.z - p.z) < ACTIONS.refillRadius + 1) {
-      world.prompt = world.ammo < ACTIONS.maxAmmo ? 'Refilling balloons...' : 'Balloons full!'
-      return
+      return set(
+        world.ammo < ACTIONS.maxAmmo ? 'Refilling balloons...' : 'Balloons full!',
+        'hint',
+      )
     }
   }
-  world.prompt = 'Click throw • F spray • Shift run'
+  set('Click throw • F spray • Shift run', 'controls')
 }

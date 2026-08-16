@@ -34,6 +34,27 @@ you can host anywhere, and `npm run preview` serves it.
 | `Q` / arrow keys | Turn the camera without a mouse |
 | `Esc` | Release the mouse |
 
+### On a tablet or phone
+
+Touch controls appear automatically on a touchscreen — no keyboard or mouse
+needed. Tapping Play also asks for fullscreen, since browser chrome eats a lot
+of a tablet screen.
+
+| Touch | Action |
+| --- | --- |
+| Left half — drag | Walk or drive. The stick appears wherever your thumb lands, so you never have to look for it |
+| Left half — push to the rim | Run. Push halfway and you walk; it's analog, and so is steering |
+| Right half — drag | Look around, replacing mouse-look |
+| 💧 hold | Throw water balloons |
+| 🚗 / 🚪 tap | Get in or out of a car or train |
+| ⬆️ / 🛑 hold | Jump on foot, brake while driving |
+| 🎨 hold | Spray paint (greyed out while driving) |
+| Chips at the top | Tap to change the weather or the time of day |
+
+The HUD rearranges itself for touch: the minimap moves to the right edge with
+the balloon count under it, leaving both bottom corners free for your thumbs.
+Pixel ratio and the weather particle budget are also reduced on mobile GPUs.
+
 ## How to play
 
 Make mischief to earn **fun points** and raise your **wanted level**:

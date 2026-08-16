@@ -22,6 +22,8 @@ import { Balloons, Splashes, PaintDecals, BlobShadows, SprayBeam } from './rende
 import HUD from './ui/HUD.jsx'
 import StartScreen from './ui/StartScreen.jsx'
 import BustedOverlay from './ui/BustedOverlay.jsx'
+import TouchControls from './ui/TouchControls.jsx'
+import { isTouchDevice, maxPixelRatio } from './game/device.js'
 import './ui/ui.css'
 
 function Scene({ world }) {
@@ -53,7 +55,18 @@ export default function App() {
   const world = useMemo(() => createWorld(), [])
   const phase = useGame((s) => s.phase)
   const setPhase = useGame((s) => s.setPhase)
+  const touch = useGame((s) => s.touch)
+  const setTouch = useGame((s) => s.setTouch)
   const canvasRef = useRef(null)
+
+  // Show the on-screen controls on a tablet immediately, and on a hybrid
+  // laptop as soon as someone actually touches the screen.
+  useEffect(() => {
+    if (isTouchDevice) setTouch(true)
+    const onTouch = () => setTouch(true)
+    window.addEventListener('touchstart', onTouch, { once: true, passive: true })
+    return () => window.removeEventListener('touchstart', onTouch)
+  }, [setTouch])
 
   useEffect(() => {
     // Expose for quick tuning from the browser console.
@@ -68,7 +81,13 @@ export default function App() {
     resetGame(world)
     world.phase = 'playing'
     setPhase('playing')
-    requestLock(canvasRef.current)
+    if (touch) {
+      // Browser chrome eats a lot of a tablet screen; this is a user gesture so
+      // the request is allowed. Failing is fine - the game just runs windowed.
+      document.documentElement.requestFullscreen?.().catch(() => {})
+    } else {
+      requestLock(canvasRef.current)
+    }
   }
 
   useEffect(() => {
@@ -80,7 +99,7 @@ export default function App() {
       <Canvas
         flat
         shadows={false}
-        dpr={[1, 1.75]}
+        dpr={[1, maxPixelRatio]}
         camera={{ fov: 60, near: 0.4, far: 1800, position: [0, 30, 60] }}
         onCreated={({ gl, scene, camera }) => {
           canvasRef.current = gl.domElement
@@ -89,7 +108,8 @@ export default function App() {
           window.three = { gl, scene, camera }
         }}
         onPointerDown={() => {
-          if (world.phase === 'playing') requestLock(canvasRef.current)
+          // Pointer lock is meaningless on a touchscreen.
+          if (world.phase === 'playing' && !touch) requestLock(canvasRef.current)
         }}
       >
         <Scene world={world} />
@@ -97,6 +117,7 @@ export default function App() {
 
       <HUD world={world} />
       <BustedOverlay />
+      {touch && phase === 'playing' && <TouchControls world={world} />}
       {phase === 'menu' && <StartScreen onStart={start} />}
     </>
   )

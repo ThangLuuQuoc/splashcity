@@ -3,7 +3,7 @@ import { resolveStatic } from '../collision.js'
 import { supportHeight } from '../rail.js'
 import { driveVehicle } from './vehicle.js'
 import { findBoardableCar, boardTrain, rideTrain, leaveTrain } from './train.js'
-import { input, keyDown, keyPressed } from './input.js'
+import { input, keyDown, keyPressed, axisForward, axisRight } from './input.js'
 import { playEngineStart } from '../audio.js'
 
 const shortAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a))
@@ -106,11 +106,9 @@ export function updatePlayer(world, dt) {
       return
     }
 
-    const throttle = (keyDown('KeyW') ? 1 : 0) - (keyDown('KeyS') ? 1 : 0)
-    const steer = (keyDown('KeyA') ? 1 : 0) - (keyDown('KeyD') ? 1 : 0)
     const impact = driveVehicle(world, car, dt, {
-      throttle,
-      steer,
+      throttle: axisForward(),
+      steer: -axisRight(), // steering is positive-left, the axis is positive-right
       handbrake: keyDown('Space'),
     })
     if (impact > 6) cam.shake = Math.min(1, cam.shake + impact / 40)
@@ -146,9 +144,8 @@ export function updatePlayer(world, dt) {
     }
   }
 
-  const fwd = (keyDown('KeyW') ? 1 : 0) - (keyDown('KeyS') ? 1 : 0)
-  const right = (keyDown('KeyD') ? 1 : 0) - (keyDown('KeyA') ? 1 : 0)
-  p.sprinting = keyDown('ShiftLeft') || keyDown('ShiftRight')
+  const fwd = axisForward()
+  const right = axisRight()
 
   // Movement is relative to where the camera is looking.
   const sin = Math.sin(cam.yaw)
@@ -157,8 +154,14 @@ export function updatePlayer(world, dt) {
   let dz = fwd * cos - right * sin
   const len = Math.hypot(dx, dz)
 
-  const speed = p.sprinting ? PLAYER.sprintSpeed : PLAYER.walkSpeed
-  if (len > 0.001) {
+  // A thumbstick pushed to the rim sprints; the keyboard is always full
+  // deflection, so Shift stays the way to run.
+  const deflection = Math.min(1, len)
+  p.sprinting = keyDown('ShiftLeft') || keyDown('ShiftRight') ||
+    (input.touchActive && deflection > 0.85)
+
+  const speed = (p.sprinting ? PLAYER.sprintSpeed : PLAYER.walkSpeed) * deflection
+  if (len > 0.001 && speed > 0.01) {
     dx /= len
     dz /= len
     p.vx += (dx * speed - p.vx) * Math.min(1, PLAYER.accel * dt / speed)

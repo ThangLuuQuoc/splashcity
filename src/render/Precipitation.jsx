@@ -2,6 +2,12 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Object3D, Color } from 'three'
 import { WEATHER } from '../game/config.js'
+import { quality } from '../game/device.js'
+
+// Mobile GPUs get a smaller particle budget. The box below shrinks with it, so
+// the weather still looks just as heavy - there is simply less of it off-screen.
+const MAX_DROPS = Math.floor(WEATHER.maxParticles * quality)
+const MAX_LEAVES = Math.floor(WEATHER.maxLeaves * quality)
 
 const dummy = new Object3D()
 const col = new Color()
@@ -12,7 +18,8 @@ const col = new Color()
 
 // Kept deliberately tight: the same particle budget spread over a smaller
 // volume reads as much heavier weather, and you never see the far edge anyway.
-const BOX = { w: 110, h: 52, d: 110 }
+const SPAN = 110 * Math.sqrt(quality)
+const BOX = { w: SPAN, h: 52, d: SPAN }
 const RAIN_COLOR = new Color('#a8d5f2')
 const SNOW_COLOR = new Color('#ffffff')
 
@@ -33,7 +40,7 @@ function makeParticles(count) {
 
 export function Precipitation({ world }) {
   const ref = useRef()
-  const particles = useMemo(() => makeParticles(WEATHER.maxParticles), [])
+  const particles = useMemo(() => makeParticles(MAX_DROPS), [])
 
   useFrame(({ camera }, delta) => {
     const mesh = ref.current
@@ -59,7 +66,7 @@ export function Precipitation({ world }) {
     const cx = camera.position.x
     const cz = camera.position.z
 
-    const active = Math.floor(WEATHER.maxParticles * amount)
+    const active = Math.floor(MAX_DROPS * amount)
     col.copy(snowy ? SNOW_COLOR : RAIN_COLOR)
 
     // A raindrop is a streak leaning into the wind; a snowflake is a fleck.
@@ -108,7 +115,7 @@ export function Precipitation({ world }) {
   return (
     <instancedMesh
       ref={ref}
-      args={[null, null, WEATHER.maxParticles]}
+      args={[null, null, MAX_DROPS]}
       frustumCulled={false}
     >
       <boxGeometry args={[1, 1, 1]} />
@@ -122,7 +129,7 @@ export function WindDebris({ world }) {
   const ref = useRef()
   const leaves = useMemo(
     () =>
-      Array.from({ length: WEATHER.maxLeaves }, () => ({
+      Array.from({ length: MAX_LEAVES }, () => ({
         x: (Math.random() - 0.5) * BOX.w,
         y: 0.4 + Math.random() * 7,
         z: (Math.random() - 0.5) * BOX.d,
@@ -148,7 +155,7 @@ export function WindDebris({ world }) {
 
     const cx = camera.position.x
     const cz = camera.position.z
-    const active = Math.floor(WEATHER.maxLeaves * Math.min(1, strength * 1.4))
+    const active = Math.floor(MAX_LEAVES * Math.min(1, strength * 1.4))
 
     for (let i = 0; i < active; i++) {
       const p = leaves[i]
@@ -177,7 +184,7 @@ export function WindDebris({ world }) {
   })
 
   return (
-    <instancedMesh ref={ref} args={[null, null, WEATHER.maxLeaves]} frustumCulled={false}>
+    <instancedMesh ref={ref} args={[null, null, MAX_LEAVES]} frustumCulled={false}>
       <boxGeometry args={[1, 1, 1]} />
       <meshLambertMaterial color="#b5843c" />
     </instancedMesh>

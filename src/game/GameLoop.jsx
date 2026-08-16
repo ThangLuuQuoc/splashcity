@@ -130,6 +130,7 @@ export default function GameLoop({ world }) {
         heat: world.heat,
         ammo: world.ammo,
         prompt: world.prompt,
+        promptKind: world.promptKind,
         cooling: !!world.cooling,
         stats: world.stats,
       })
