@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-ssr/
+.vite/
+
+# deploy tooling
+.vercel
+
+# editors / OS
+.DS_Store
+Thumbs.db
+*.local
+*.log
