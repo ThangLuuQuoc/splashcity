@@ -226,6 +226,28 @@
 .play-button:hover { transform: translateY(-2px); }
 .play-button:active { transform: translateY(3px); box-shadow: 0 3px 0 #c98a06; }
 
+.install-button {
+  pointer-events: auto;
+  font: inherit;
+  font-size: 15px;
+  margin-top: 16px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  touch-action: manipulation;
+}
+
+.install-button:hover { background: rgba(255, 255, 255, 0.22); }
+
+.install-hint {
+  margin-top: 16px;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
 .overlay.busted {
   background: rgba(120, 20, 30, 0.42);
   animation: fadein 0.35s ease;
@@ -254,6 +276,66 @@
   border-radius: 999px;
   background: rgba(12, 20, 34, 0.6);
   border: 2px solid rgba(255, 210, 63, 0.5);
+}
+
+/* ---- natural disasters ------------------------------------------------- */
+
+.disaster-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 30px;
+  border-radius: 16px;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #fff;
+  background: rgba(120, 30, 20, 0.55);
+  border: 3px solid rgba(255, 190, 60, 0.85);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.disaster-banner.warning { animation: pulse-warn 0.7s ease-in-out infinite; }
+.disaster-icon { font-size: 32px; }
+
+@keyframes pulse-warn {
+  50% { transform: translate(-50%, -50%) scale(1.06); border-color: rgba(255, 90, 60, 0.95); }
+}
+
+.disaster-buttons {
+  position: absolute;
+  top: 16px;
+  right: 190px;
+  display: flex;
+  gap: 8px;
+}
+
+.disaster-chip {
+  pointer-events: auto;
+  touch-action: manipulation;
+  font: inherit;
+  font-size: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(12, 20, 34, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.disaster-chip:hover { background: rgba(255, 255, 255, 0.2); }
+
+.hud.touch .disaster-buttons { top: 16px; right: 178px; }
+
+@media (max-width: 900px) {
+  .disaster-banner { font-size: 20px; padding: 10px 20px; letter-spacing: 2px; }
+  .disaster-icon { font-size: 24px; }
 }
 
 /* ---- touch controls ---------------------------------------------------- */

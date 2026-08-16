@@ -11,6 +11,9 @@ import { resolveStatic, resolveCircles } from '../collision.js'
  * @returns impact strength (0 when nothing was hit)
  */
 export function driveVehicle(world, car, dt, controls, maxSpeed = CAR.maxSpeed) {
+  // Wheels off the ground: a disaster owns this car until it lands again.
+  if (car.airborne) return 0
+
   const throttle = controls.throttle || 0
   const steer = controls.steer || 0
   // Wet tarmac and snow cut into acceleration, braking and cornering bite.

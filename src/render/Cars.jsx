@@ -71,8 +71,23 @@ export default function Cars({ world }) {
       col.set(isCop ? '#f4f6fa' : c.color)
       if (c.soaked > 0) col.lerp(soakedColor, Math.min(0.65, c.soaked / 8))
 
-      dummy.position.set(c.x, BODY.y, c.z)
-      dummy.rotation.set(0, c.heading, 0)
+      // A tornado or tsunami can throw the car into the air and tumble it.
+      const lift = c.y || 0
+      const roll = c.roll || 0
+      const pitch = c.pitch || 0
+      const tumbling = lift > 0.01 || roll !== 0 || pitch !== 0
+      const setRot = () => {
+        if (tumbling) {
+          dummy.rotation.order = 'YXZ'
+          dummy.rotation.set(pitch, c.heading, roll)
+          dummy.rotation.order = 'XYZ'
+        } else {
+          dummy.rotation.set(0, c.heading, 0)
+        }
+      }
+
+      dummy.position.set(c.x, BODY.y + lift, c.z)
+      setRot()
       dummy.scale.set(BODY.w, BODY.h, BODY.l)
       dummy.updateMatrix()
       body.setMatrixAt(i, dummy.matrix)
@@ -82,12 +97,12 @@ export default function Cars({ world }) {
       const backX = c.x - s * 0.28
       const backZ = c.z - cs * 0.28
 
-      dummy.position.set(backX, GLASS.y, backZ)
+      dummy.position.set(backX, GLASS.y + lift, backZ)
       dummy.scale.set(GLASS.w, GLASS.h, GLASS.l)
       dummy.updateMatrix()
       glass.setMatrixAt(i, dummy.matrix)
 
-      dummy.position.set(backX, ROOF.y, backZ)
+      dummy.position.set(backX, ROOF.y + lift, backZ)
       dummy.scale.set(ROOF.w, ROOF.h, ROOF.l)
       dummy.updateMatrix()
       roof.setMatrixAt(i, dummy.matrix)
@@ -96,7 +111,7 @@ export default function Cars({ world }) {
       for (let w = 0; w < 4; w++) {
         const lx = w % 2 === 0 ? -0.92 : 0.92
         const lz = w < 2 ? 1.4 : -1.4
-        dummy.position.set(c.x + lx * cs + lz * s, RIDE + WHEEL_R, c.z - lx * s + lz * cs)
+        dummy.position.set(c.x + lx * cs + lz * s, RIDE + WHEEL_R + lift, c.z - lx * s + lz * cs)
         dummy.rotation.order = 'YXZ'
         dummy.rotation.set(c.wheelSpin || 0, c.heading + (w < 2 ? (c.steer || 0) * 0.35 : 0), 0)
         dummy.scale.set(1, 1, 1)

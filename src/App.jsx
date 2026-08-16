@@ -16,6 +16,8 @@ import Props from './render/Props.jsx'
 import Rail from './render/Rail.jsx'
 import Trains from './render/Trains.jsx'
 import Atmosphere from './render/Atmosphere.jsx'
+import Ocean from './render/Ocean.jsx'
+import Disasters from './render/Disasters.jsx'
 import { Precipitation, WindDebris } from './render/Precipitation.jsx'
 import { Balloons, Splashes, PaintDecals, BlobShadows, SprayBeam } from './render/Effects.jsx'
 
@@ -30,6 +32,7 @@ function Scene({ world }) {
   return (
     <>
       <Atmosphere world={world} />
+      <Ocean world={world} />
 
       <City world={world} />
       <PaintDecals world={world} />
@@ -45,6 +48,7 @@ function Scene({ world }) {
       <SprayBeam world={world} />
       <Precipitation world={world} />
       <WindDebris world={world} />
+      <Disasters world={world} />
 
       <GameLoop world={world} />
     </>

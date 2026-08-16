@@ -1,4 +1,59 @@
+import { useEffect, useState } from 'react'
 import { useGame } from '../game/store.js'
+
+/**
+ * Offers "add to home screen" when the browser says the app is installable.
+ * Chrome fires beforeinstallprompt and lets us defer it; iOS Safari has no such
+ * event, so there we fall back to telling the player where the button is.
+ */
+function InstallButton() {
+  const [prompt, setPrompt] = useState(null)
+  const [installed, setInstalled] = useState(false)
+
+  useEffect(() => {
+    const onPrompt = (e) => {
+      e.preventDefault()
+      setPrompt(e)
+    }
+    const onInstalled = () => {
+      setInstalled(true)
+      setPrompt(null)
+    }
+    window.addEventListener('beforeinstallprompt', onPrompt)
+    window.addEventListener('appinstalled', onInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
+  }, [])
+
+  // Already running from the home screen - nothing to offer.
+  const standalone = typeof window !== 'undefined' &&
+    (window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone)
+  if (installed || standalone) return null
+
+  const isIOS = typeof navigator !== 'undefined' &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+
+  if (!prompt) {
+    return isIOS
+      ? <div className="install-hint">Tap Share then <strong>Add to Home Screen</strong> to install</div>
+      : null
+  }
+
+  return (
+    <button
+      className="install-button"
+      onClick={async () => {
+        prompt.prompt()
+        await prompt.userChoice
+        setPrompt(null)
+      }}
+    >
+      ⬇️ Install to home screen
+    </button>
+  )
+}
 
 const KEYBOARD_CONTROLS = [
   [['W', 'A', 'S', 'D'], 'walk / drive'],
@@ -48,6 +103,7 @@ export default function StartScreen({ onStart }) {
       </div>
 
       <button className="play-button" onClick={onStart}>Play</button>
+      <InstallButton />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { buildBroadphase } from './collision.js'
 import { makeRng } from './rng.js'
 import { createTrains } from './systems/train.js'
 import { createWeather } from './systems/weather.js'
+import { createDisaster } from './systems/disasters.js'
 import { TIME } from './config.js'
 
 // The whole simulation lives in this one mutable object. Nothing here is React
@@ -70,6 +71,8 @@ function spawnTraffic(rng, city, cars) {
       wheelSpin: 0,
       soaked: 0,
       bumpCooldown: 0,
+      // Set when a disaster throws the car around.
+      vy: 0, roll: 0, pitch: 0, rollV: 0, pitchV: 0, airborne: false,
       node: node.id, next: next.id,
       alive: true,
     })
@@ -143,6 +146,7 @@ export function createWorld() {
     time: 0,
     timeOfDay: TIME.startHour,
     weather: createWeather(),
+    disaster: createDisaster(),
     phase: 'menu', // menu | playing | busted
 
     player: {
@@ -175,6 +179,7 @@ export function createWorld() {
       active: false, x: 0, z: 0, y: 0, heading: 0, speed: 0, steer: 0,
       node: -1, next: -1, state: 'navigate', wheelSpin: 0,
       bustTimer: 0, bailTimer: 0, sirenPhase: 0, soaked: 0, bumpCooldown: 0,
+      vy: 0, roll: 0, pitch: 0, rollV: 0, pitchV: 0, airborne: false,
     })),
 
     footCops: pool(MAX_FOOT_COPS, () => ({

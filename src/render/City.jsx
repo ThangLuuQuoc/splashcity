@@ -216,8 +216,10 @@ export default function City({ world }) {
   return (
     <group>
       {/* grass surround + asphalt */}
+      {/* Grass stops at the sea wall - beyond it Ocean.jsx takes over with sand
+          and then open water, which is where a tsunami comes from. */}
       <mesh ref={groundRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]}>
-        <planeGeometry args={[1400, 1400]} />
+        <planeGeometry args={[extent, extent]} />
         <meshLambertMaterial color={PALETTE.ground} />
       </mesh>
       <mesh ref={roadRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>

@@ -35,6 +35,44 @@ export const WEATHER = {
   rainSightPenalty: 0.25, // ...and this much less in heavy rain
 }
 
+export const OCEAN = {
+  beachWidth: 52, // sand ring between the city wall and the water
+  waterY: -1.8,
+  extent: 4000,
+}
+
+export const DISASTER = {
+  warningTime: 6, // seconds of on-screen warning before it arrives
+  minGap: 90, // shortest quiet spell between two disasters
+  maxGap: 190,
+  stormChance: 0.55, // a thunderstorm makes one much more likely
+
+  tornado: {
+    duration: 42,
+    radius: 32, // outer pull
+    core: 8, // inside this it lifts rather than drags
+    moveSpeed: 13,
+    pull: 22, // inward, units/s^2
+    swirl: 40, // tangential
+    lift: 30,
+    carLift: 15, // the initial kick that gets a car off the ground
+    liftAccel: 46, // sustained lift while held in the funnel; beats gravity
+    maxHeight: 30, // cars stop climbing here and just circle
+    pedLift: 11,
+    gravity: 19,
+    airDrag: 0.55, // how fast a flung car loses its sideways speed
+  },
+
+  tsunami: {
+    speed: 32, // how fast the front crosses the city
+    thickness: 30, // depth of the churning water behind the crest
+    crest: 16, // wave height - tall enough to read as a wall from street level
+    push: 46,
+    lift: 12,
+    floodTime: 10, // seconds the shallow water lingers before draining
+  },
+}
+
 export const RAIL = {
   ring: 2, // the loop runs along road ring 2 and its mirror, B - 2
   cornerRadius: 18,

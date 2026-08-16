@@ -3,6 +3,7 @@ import { ACTIONS, HEAT } from '../game/config.js'
 import { setMuted } from '../game/audio.js'
 import Minimap from './Minimap.jsx'
 import WeatherWidget from './WeatherWidget.jsx'
+import DisasterBanner from './DisasterBanner.jsx'
 
 const MAX_STARS = HEAT.stars.length
 
@@ -89,6 +90,7 @@ export default function HUD({ world }) {
       <Prompt />
       <MuteButton />
       <WeatherWidget world={world} />
+      <DisasterBanner world={world} />
       <Minimap world={world} />
     </div>
   )

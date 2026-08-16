@@ -6,6 +6,7 @@ import { updatePlayer, updateCamera, cameraTarget } from './systems/player.js'
 import { updateTraffic } from './systems/traffic.js'
 import { updateTrains } from './systems/train.js'
 import { updateWeather, cycleWeather, skipTimePhase } from './systems/weather.js'
+import { updateDisasters, triggerDisaster } from './systems/disasters.js'
 import { keyPressed } from './systems/input.js'
 import { updatePedestrians, carsVersusPedestrians } from './systems/pedestrians.js'
 import { resolveVehicleCollisions, updateProps } from './systems/physics.js'
@@ -72,6 +73,8 @@ export default function GameLoop({ world }) {
 
     if (keyPressed('KeyC')) cycleWeather(world)
     if (keyPressed('KeyN')) skipTimePhase(world)
+    if (keyPressed('KeyT')) triggerDisaster(world, 'tornado')
+    if (keyPressed('KeyY')) triggerDisaster(world, 'tsunami')
 
     updateCamera(world, dt)
     // Trains move before the player so a rider is carried by this frame's
@@ -85,6 +88,9 @@ export default function GameLoop({ world }) {
     updateProps(world, dt)
     updateActions(world, dt)
     updateProjectiles(world, dt)
+    // Runs after the movement systems so it has the last word on where
+    // everything ends up when it is throwing the city around.
+    updateDisasters(world, dt)
     updatePolice(world, dt)
     updateHeat(world, dt)
     updatePrompt(world)
