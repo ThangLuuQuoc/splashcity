@@ -3,6 +3,10 @@
   inset: 0;
   pointer-events: none;
   font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  /* Above the full-screen touch surface, or its buttons would be unreachable on
+     a tablet. Safe because the panel itself never captures pointer events -
+     only the handful of children that opt back in with pointer-events: auto. */
+  z-index: 10;
 }
 
 .hud-panel {
@@ -362,6 +366,27 @@
   bottom: auto;
   padding: 5px 9px;
   gap: 5px;
+}
+
+/* Fingers need a bigger target than a mouse pointer: the chips grow to a
+   comfortable tap size, and get a little breathing room from each other. */
+/* Clears the taller mute button sitting above it. */
+.hud.touch .hud-weather { gap: 10px; padding: 7px; margin-top: 56px; }
+
+.hud.touch .weather-chip {
+  min-height: 44px;
+  padding: 9px 16px;
+  font-size: 15px;
+  touch-action: manipulation;
+}
+
+.hud.touch .weather-icon { font-size: 20px; }
+
+.hud.touch .mute-button {
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 14px;
+  touch-action: manipulation;
 }
 
 .hud.touch .hud-ammo > span { font-size: 13px; }
