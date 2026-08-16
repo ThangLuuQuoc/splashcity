@@ -147,11 +147,14 @@ export function updatePlayer(world, dt) {
   const fwd = axisForward()
   const right = axisRight()
 
-  // Movement is relative to where the camera is looking.
+  // Movement is relative to where the camera is looking. The camera looks along
+  // (sin yaw, cos yaw), and in a Y-up right-handed frame its screen-right is
+  // (-cos yaw, sin yaw) - hence the minus on the strafe term. Getting this sign
+  // wrong mirrors A and D, which is exactly what it used to do.
   const sin = Math.sin(cam.yaw)
   const cos = Math.cos(cam.yaw)
-  let dx = fwd * sin + right * cos
-  let dz = fwd * cos - right * sin
+  let dx = fwd * sin - right * cos
+  let dz = fwd * cos + right * sin
   const len = Math.hypot(dx, dz)
 
   // A thumbstick pushed to the rim sprints; the keyboard is always full
