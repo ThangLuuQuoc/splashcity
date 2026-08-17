@@ -12,6 +12,7 @@ import { resolveStatic } from '../collision.js'
 import { CITY } from '../config.js'
 import { axisForward, axisRight, keyDown, uiCaptured } from './input.js'
 import { playEngineStart } from '../audio.js'
+import { t } from '../i18n.js'
 
 export function createHelicopter(city) {
   return {
@@ -55,36 +56,36 @@ function buildTourRoute(world) {
 
 /** Bật / tắt bay tự động. Trả về true nếu vừa bật. */
 export function toggleHeliTour(world) {
-  const t = world.heli.tour
-  if (t.active) {
-    t.active = false
+  const tour = world.heli.tour
+  if (tour.active) {
+    tour.active = false
     return false
   }
 
-  t.route = buildTourRoute(world)
-  if (!t.route.length) return false
+  tour.route = buildTourRoute(world)
+  if (!tour.route.length) return false
 
   // Bắt đầu từ khu vực gần nhất, khỏi phải bay ngược nửa thành phố ở ngay bước đầu.
   const h = world.heli
   let best = 0
   let bestDist = Infinity
-  t.route.forEach((stop, i) => {
+  tour.route.forEach((stop, i) => {
     const d = Math.hypot(stop.x - h.x, stop.z - h.z)
     if (d < bestDist) { bestDist = d; best = i }
   })
 
-  t.active = true
-  t.index = best
-  t.phase = 'climb'
-  t.orbitAngle = 0
-  t.orbitSwept = 0
+  tour.active = true
+  tour.index = best
+  tour.phase = 'climb'
+  tour.orbitAngle = 0
+  tour.orbitSwept = 0
   return true
 }
 
 /** Khu vực tour đang hướng tới, hoặc null khi không bật tour. */
 export function tourTarget(world) {
-  const t = world.heli.tour
-  return t.active ? t.route[t.index] || null : null
+  const tour = world.heli.tour
+  return tour.active ? tour.route[tour.index] || null : null
 }
 
 /**
@@ -96,18 +97,18 @@ export function tourTarget(world) {
  */
 function updateTour(world, dt) {
   const h = world.heli
-  const t = h.tour
+  const tour = h.tour
   const cfg = HELI.tour
-  const stop = t.route[t.index]
-  if (!stop) { t.active = false; return }
+  const stop = tour.route[tour.index]
+  if (!stop) { tour.active = false; return }
 
   const dx = stop.x - h.x
   const dz = stop.z - h.z
   const dist = Math.hypot(dx, dz) || 0.0001
 
   // Lấy độ cao trước đã: bay ngang ở tầm thấp là đụng nhà.
-  if (h.y < cfg.altitude - 2) t.phase = 'climb'
-  else if (t.phase === 'climb') t.phase = 'cruise'
+  if (h.y < cfg.altitude - 2) tour.phase = 'climb'
+  else if (tour.phase === 'climb') tour.phase = 'cruise'
 
   let wantX = 0
   let wantZ = 0
@@ -115,21 +116,21 @@ function updateTour(world, dt) {
   let faceZ = dz / dist
   let speed = cfg.cruiseSpeed
 
-  if (t.phase === 'climb') {
+  if (tour.phase === 'climb') {
     speed *= cfg.climbScale
     wantX = dx / dist
     wantZ = dz / dist
-  } else if (t.phase === 'orbit' || dist <= cfg.orbitRadius + 2) {
-    if (t.phase !== 'orbit') {
-      t.phase = 'orbit'
-      t.orbitAngle = Math.atan2(h.z - stop.z, h.x - stop.x)
-      t.orbitSwept = 0
+  } else if (tour.phase === 'orbit' || dist <= cfg.orbitRadius + 2) {
+    if (tour.phase !== 'orbit') {
+      tour.phase = 'orbit'
+      tour.orbitAngle = Math.atan2(h.z - stop.z, h.x - stop.x)
+      tour.orbitSwept = 0
     }
-    t.orbitAngle += cfg.orbitSpeed * dt
-    t.orbitSwept += cfg.orbitSpeed * dt
+    tour.orbitAngle += cfg.orbitSpeed * dt
+    tour.orbitSwept += cfg.orbitSpeed * dt
 
     // Điểm cần tới trên vòng tròn, hơi chệch về phía trước để bay thành đường tròn mượt.
-    const lead = t.orbitAngle + 0.35
+    const lead = tour.orbitAngle + 0.35
     const targetX = stop.x + Math.cos(lead) * cfg.orbitRadius
     const targetZ = stop.z + Math.sin(lead) * cfg.orbitRadius
     const tx = targetX - h.x
@@ -138,10 +139,10 @@ function updateTour(world, dt) {
     wantX = tx / tl
     wantZ = tz / tl
 
-    if (t.orbitSwept >= Math.PI * 2 * cfg.orbitTurns) {
-      t.index = (t.index + 1) % t.route.length
-      t.phase = 'cruise'
-      t.orbitSwept = 0
+    if (tour.orbitSwept >= Math.PI * 2 * cfg.orbitTurns) {
+      tour.index = (tour.index + 1) % tour.route.length
+      tour.phase = 'cruise'
+      tour.orbitSwept = 0
     }
   } else {
     wantX = dx / dist
@@ -326,15 +327,15 @@ export function updateHelicopter(world, dt, exitPressed) {
   if (exitPressed) {
     if (h.landed && Math.abs(descending) < HELI.landSpeed) {
       exitHelicopter(world)
-      return 'Đã xuống trực thăng'
+      return t('heli.exited')
     }
     // Đang bay tự động mà bấm hạ cánh: tắt tour luôn, khỏi bắt người chơi phải nhớ
     // là còn một công tắc nữa mới điều khiển lại được.
     if (h.tour.active) {
       h.tour.active = false
-      return 'Đã tắt bay tự động - giữ 🔽 để hạ cánh'
+      return t('heli.tourOff')
     }
-    return 'Hạ cánh xuống đất trước khi ra khỏi trực thăng!'
+    return t('heli.landFirst')
   }
 
   return null

@@ -6,6 +6,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useGame } from '../game/store.js'
+import { t } from '../game/i18n.js'
 import { useArmed } from './useArmed.js'
 import { CITY } from '../game/config.js'
 import { roadCenter } from '../game/city.js'
@@ -20,6 +21,7 @@ export default function MapOverlay({ world }) {
   const travelling = useGame((s) => s.travelling)
   const travelName = useGame((s) => s.travelName)
   const listRef = useRef(null)
+  useGame((s) => s.lang) // đổi ngôn ngữ là bản đồ vẽ lại
   const armed = useArmed(mapOpen)
 
   // Bàn phím: mũi tên lên/xuống chạy trong danh sách, Enter/Space chọn. Mở bản đồ là
@@ -80,7 +82,7 @@ export default function MapOverlay({ world }) {
     <div className="map-backdrop" onClick={closeFromBackdrop}>
       <div className="map-window" onClick={(e) => e.stopPropagation()}>
         <div className="map-header">
-          <span className="map-title">🗺️ BẢN ĐỒ SPLASH CITY</span>
+          <span className="map-title">{t('map.title')}</span>
           <button className="map-close-btn" onClick={close}>✕</button>
         </div>
 
@@ -113,7 +115,7 @@ export default function MapOverlay({ world }) {
             })}
 
             {/* Vị trí người chơi */}
-            <div className="map-you" style={{ left: toPx(p.x), top: toPx(p.z) }} title="Bạn đang ở đây">
+            <div className="map-you" style={{ left: toPx(p.x), top: toPx(p.z) }} title={t('map.youAreHere')}>
               <span>🧒</span>
             </div>
           </div>
@@ -121,21 +123,18 @@ export default function MapOverlay({ world }) {
           <div className="map-side">
             {travelling ? (
               <div className="map-travelling">
-                <span>🏃 Đang tự động chạy tới <b>{travelName}</b></span>
+                <span>{t('map.travellingTo')} <b>{travelName}</b></span>
                 <button
                   className="map-stop-btn"
-                  onClick={() => { cancelTravel(world, 'Đã dừng tự động di chuyển'); close() }}
+                  onClick={() => { cancelTravel(world, t('travel.stopped')); close() }}
                 >
-                  ⏹ DỪNG LẠI
+                  {t('map.stopButton')}
                 </button>
               </div>
             ) : blocked ? (
               <div className="map-blocked">⚠️ {blocked}</div>
             ) : (
-              <div className="map-hint">
-                Chọn một khu vực để tự động chạy tới — bấm chuột, hoặc dùng ↑ ↓ rồi Enter.
-                Đang chạy mà bấm WASD là dừng. Esc đóng bản đồ.
-              </div>
+              <div className="map-hint">{t('map.hint')}</div>
             )}
 
             <div className="map-list" ref={listRef}>

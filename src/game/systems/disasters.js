@@ -1,6 +1,7 @@
 import { DISASTER, CITY, CAR } from '../config.js'
 import { scarePed } from './pedestrians.js'
 import { playThunder, playSplash } from '../audio.js'
+import { t } from '../i18n.js'
 
 // Two natural disasters, both played for laughs rather than danger: a tornado
 // that picks cars up and spins them around, and a tsunami that rolls in off the
@@ -414,8 +415,8 @@ export function floodDepth(world) {
 export function disasterLabel(world) {
   const d = world.disaster
   if (d.phase === 'idle') return null
-  const name = d.type === 'tornado' ? 'TORNADO' : 'TSUNAMI'
-  if (d.phase === 'warning') return `${name} INCOMING — ${Math.ceil(d.timer)}`
+  const name = t(d.type === 'tornado' ? 'disaster.tornado' : 'disaster.tsunami')
+  if (d.phase === 'warning') return t('disaster.incoming', { name, secs: Math.ceil(d.timer) })
   if (d.phase === 'active') return name
-  return `${name} passing`
+  return t('disaster.passing', { name })
 }

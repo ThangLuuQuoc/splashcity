@@ -1,5 +1,6 @@
 import { INTERIORS, SUPERMARKET_PRODUCTS } from '../config.js'
 import { keyPressed, uiCaptured } from './input.js'
+import { t } from '../i18n.js'
 import { playBeep, playAlarm, playPickup, playCashRegister } from '../audio.js'
 
 // Vị trí cố định của các phòng nội thất trong không gian ảo
@@ -79,7 +80,7 @@ export function updateInteriors(world, dt) {
     // Cửa Đồn Cảnh Sát
     const distPolice = Math.hypot(p.x - world.city.policeDoor.x, p.z - world.city.policeDoor.z)
     if (distPolice < INTERIORS.enterDistance) {
-      world.prompt = '[E] Vào Trụ sở Cảnh sát'
+      world.prompt = t('prompt.enterPolice')
       world.promptKind = 'interior'
       if (!uiBlocked && keyPressed('KeyE')) {
         enterInterior(world, 'police_station')
@@ -90,7 +91,7 @@ export function updateInteriors(world, dt) {
     // Cửa Siêu Thị Splash Mart
     const distSuper = Math.hypot(p.x - world.city.supermarketDoor.x, p.z - world.city.supermarketDoor.z)
     if (distSuper < INTERIORS.enterDistance) {
-      world.prompt = '[E] Vào Siêu thị Splash Mart'
+      world.prompt = t('prompt.enterMart')
       world.promptKind = 'interior'
       if (!uiBlocked && keyPressed('KeyE')) {
         enterInterior(world, 'supermarket')
@@ -153,7 +154,7 @@ export function updateInteriors(world, dt) {
     // Cửa ra siêu thị (Tầng 1)
     const distExit = Math.hypot(p.x - SUPERMARKET_SPACE.door.x, p.z - SUPERMARKET_SPACE.door.z)
     if (distExit < 4.5 && p.y <= scy + 1.2) {
-      world.prompt = '[E] Rời Siêu thị ra ngoài'
+      world.prompt = t('prompt.leaveMart')
       world.promptKind = 'interior'
       if (!uiBlocked && keyPressed('KeyE')) {
         exitInterior(world)
@@ -206,10 +207,10 @@ export function updateInteriors(world, dt) {
     if (distCashier < 3.2 && p.y <= scy + 1.5) {
       if (world.cart.length > 0) {
         const total = world.cart.reduce((sum, item) => sum + item.price * item.count, 0)
-        world.prompt = `Quầy Thu Ngân • [P] Mở SplashPay Quét Mã QR (${total.toLocaleString('vi-VN')} đ)`
+        world.prompt = t('mart.checkout', { total: total.toLocaleString('vi-VN') })
         world.promptKind = 'shopping'
       } else {
-        world.prompt = 'Quầy Thu Ngân Splash Mart • Hãy nhặt hàng trên kệ trước'
+        world.prompt = t('mart.checkoutEmpty')
         world.promptKind = 'shopping'
       }
       return
@@ -222,7 +223,7 @@ export function updateInteriors(world, dt) {
       if (d < 2.8 && correctFloor) {
         const prod = SUPERMARKET_PRODUCTS.find(pr => pr.id === shelf.productId)
         if (prod) {
-          world.prompt = `[E] Nhặt ${prod.shortName} (${prod.price.toLocaleString('vi-VN')}đ) | [P] Xem Túi/Giỏ`
+          world.prompt = t('mart.pickUp', { item: prod.shortName, price: prod.price.toLocaleString('vi-VN') })
           world.promptKind = 'shopping'
 
           if (!uiBlocked && keyPressed('KeyE')) {
@@ -235,7 +236,7 @@ export function updateInteriors(world, dt) {
     }
 
     // Nếu không ở gần đối tượng đặc biệt nào, hiển thị hướng dẫn cơ bản trong siêu thị
-    world.prompt = 'Siêu thị Splash Mart • [P] Smartphone SplashPay • Phím 1-4: Dùng Item'
+    world.prompt = t('mart.idle')
     world.promptKind = 'interior'
     return
   }
@@ -262,7 +263,7 @@ export function updateInteriors(world, dt) {
     // Cửa ra đồn cảnh sát
     const distExit = Math.hypot(p.x - POLICE_SPACE.door.x, p.z - POLICE_SPACE.door.z)
     if (distExit < 4.0) {
-      world.prompt = '[E] Rời Trụ sở Cảnh sát'
+      world.prompt = t('prompt.leavePolice')
       world.promptKind = 'interior'
       if (!uiBlocked && keyPressed('KeyE')) {
         exitInterior(world)
@@ -273,7 +274,7 @@ export function updateInteriors(world, dt) {
     // Bảng Truy nã (Wanted Board)
     const distBoard = Math.hypot(p.x - POLICE_SPACE.wantedBoard.x, p.z - POLICE_SPACE.wantedBoard.z)
     if (distBoard < 3.2) {
-      world.prompt = `BẢNG TRUY NÃ: ${world.stars} ⭐ | Điểm quậy phá: ${world.score} Fun Points`
+      world.prompt = t('police.wantedBoard', { stars: world.stars, score: world.score })
       world.promptKind = 'police'
       return
     }
@@ -281,13 +282,13 @@ export function updateInteriors(world, dt) {
     // Kho Vũ Khí Nước (Armory)
     const distArmory = Math.hypot(p.x - POLICE_SPACE.armory.x, p.z - POLICE_SPACE.armory.z)
     if (distArmory < 3.2) {
-      world.prompt = '[E] Lấy Bóng Nước Siêu Cấp 2× (Mega Balloon) & Nạp Đầy Đạn'
+      world.prompt = t('police.armory')
       world.promptKind = 'police'
       if (!uiBlocked && keyPressed('KeyE')) {
         world.ammo = 16
         world.hasMegaBalloon = true
         playPickup()
-        world.prompt = '⭐ Đã nhận Bóng Nước Siêu Cấp 2× Bán Kính Nổ!'
+        world.prompt = t('police.armoryTaken')
       }
       return
     }
@@ -296,7 +297,7 @@ export function updateInteriors(world, dt) {
     const distCells = Math.hypot(p.x - POLICE_SPACE.cells.x, p.z - POLICE_SPACE.cells.z)
     if (distCells < 3.2) {
       if (!world.secretBalloonFound) {
-        world.prompt = '[E] Lục lọi góc buồng giam tìm vật phẩm bí mật'
+        world.prompt = t('police.searchCells')
         world.promptKind = 'police'
         if (!uiBlocked && keyPressed('KeyE')) {
           world.secretBalloonFound = true
@@ -304,10 +305,10 @@ export function updateInteriors(world, dt) {
           world.ammo = 16
           world.score += 500
           playPickup()
-          world.prompt = '🎉 Tìm thấy Bóng Nước Bí Mật giấu trong buồng giam! (+500 Fun Points)'
+          world.prompt = t('police.secretFound')
         }
       } else {
-        world.prompt = 'Buồng giam tạm giữ cảnh sát (Đã lục lọi sạch sẽ)'
+        world.prompt = t('police.cellsEmpty')
         world.promptKind = 'police'
       }
       return
@@ -316,7 +317,7 @@ export function updateInteriors(world, dt) {
     // Nút Báo Động Khẩn Cấp (Alarm Button)
     const distAlarm = Math.hypot(p.x - POLICE_SPACE.alarmButton.x, p.z - POLICE_SPACE.alarmButton.z)
     if (distAlarm < 2.8) {
-      world.prompt = '[E] Bấm còi báo động trêu chọc cảnh sát!'
+      world.prompt = t('police.alarm')
       world.promptKind = 'police'
       if (!uiBlocked && keyPressed('KeyE')) {
         playAlarm()
@@ -327,7 +328,7 @@ export function updateInteriors(world, dt) {
       return
     }
 
-    world.prompt = 'Trụ sở Cảnh sát • [E] Tương tác • [P] Smartphone'
+    world.prompt = t('police.idle')
     world.promptKind = 'interior'
   }
 }
@@ -396,11 +397,11 @@ export function addToCart(world, product) {
 }
 
 export function checkoutCart(world) {
-  if (!world.cart || world.cart.length === 0) return { success: false, reason: 'Giỏ hàng trống!' }
+  if (!world.cart || world.cart.length === 0) return { success: false, reason: t('cart.empty') }
   
   const total = world.cart.reduce((sum, item) => sum + item.price * item.count, 0)
   if (world.cash < total) {
-    return { success: false, reason: 'Số dư SplashPay không đủ!' }
+    return { success: false, reason: t('cart.noMoney') }
   }
 
   world.cash -= total

@@ -1,4 +1,5 @@
 import { useGame } from '../game/store.js'
+import { t } from '../game/i18n.js'
 import { checkoutCart } from '../game/systems/interiors.js'
 import { useInventoryItem } from '../game/systems/inventory.js'
 import { playBeep } from '../game/audio.js'
@@ -14,6 +15,7 @@ export default function PhoneOverlay({ world }) {
   // Nút 📱 nằm ngay trong vùng ngón tay, nên bỏ qua thao tác ~1/4 giây đầu để cú chạm
   // mở điện thoại không tự bấm hộ vào nút bên trong. Xem useArmed.js.
   const armed = useArmed(phoneOpen)
+  useGame((s) => s.lang) // đổi ngôn ngữ là điện thoại vẽ lại
 
   if (!phoneOpen) return null
 
@@ -35,7 +37,7 @@ export default function PhoneOverlay({ world }) {
     if (world) {
       const res = checkoutCart(world)
       if (res && res.success) {
-        world.prompt = '✨ Thanh toán thành công! Hàng đã vào túi đồ!'
+        world.prompt = t('phone.paid')
         setTimeout(() => {
           if (world) world.phoneOpen = false
           setPhoneOpen(false)
@@ -66,7 +68,7 @@ export default function PhoneOverlay({ world }) {
 
           {/* Header trạng thái */}
           <div className="phone-header">
-            <span className="phone-brand">📱 SplashPhone 15 Pro</span>
+            <span className="phone-brand">{t('phone.brand')}</span>
             <button className="phone-close-btn" onClick={closePhone}>✕</button>
           </div>
 
@@ -77,7 +79,7 @@ export default function PhoneOverlay({ world }) {
               <span className="splashpay-balance">{(cash).toLocaleString('vi-VN')} đ</span>
             </div>
             <div className="splashpay-status">
-              ● Sẵn sàng quét mã QR thanh toán
+              {t('phone.payReady')}
             </div>
           </div>
 
@@ -89,12 +91,12 @@ export default function PhoneOverlay({ world }) {
                   <div className="scanner-line"></div>
                   <div className="scanner-target-qr">
                     <span className="qr-box-icon">📷</span>
-                    <span>ĐANG QUÉT MÃ QR TẠI QUẦY...</span>
+                    <span>{t('phone.scanning')}</span>
                   </div>
                 </div>
 
                 <div className="phone-cart-list">
-                  <h4>🛒 Giỏ hàng ({cart.length} món):</h4>
+                  <h4>{t('phone.cart', { count: cart.length })}</h4>
                   {cart.map((item, idx) => (
                     <div key={idx} className="phone-cart-item">
                       <span>{item.icon} {item.shortName} x{item.count}</span>
@@ -102,7 +104,7 @@ export default function PhoneOverlay({ world }) {
                     </div>
                   ))}
                   <div className="phone-cart-total">
-                    <span>Tổng thanh toán:</span>
+                    <span>{t('phone.total')}</span>
                     <span className="total-amount">{cartTotal.toLocaleString('vi-VN')} đ</span>
                   </div>
                 </div>
@@ -112,16 +114,16 @@ export default function PhoneOverlay({ world }) {
                   onClick={handlePay}
                   disabled={cash < cartTotal}
                 >
-                  ⚡ QUÉT MÃ QR THANH TOÁN NGAY
+                  {t('phone.payNow')}
                 </button>
               </div>
             ) : (
               <div className="phone-inventory-section">
-                <h4>🎒 Túi đồ cá nhân (Nhấn để dùng):</h4>
+                <h4>{t('phone.bag')}</h4>
                 {inventory.length === 0 ? (
                   <div className="phone-empty-inv">
-                    <p>Túi đồ đang trống.</p>
-                    <p>Hãy vào Siêu thị Splash Mart để nhặt bánh Oreo, Snack Lay's, Chuối già Nam Mỹ, P/S dâu, Súng nước Soaker...</p>
+                    <p>{t('phone.bagEmpty')}</p>
+                    <p>{t('phone.bagEmptyHint')}</p>
                   </div>
                 ) : (
                   <div className="phone-inv-grid">
@@ -135,7 +137,7 @@ export default function PhoneOverlay({ world }) {
                         <span className="inv-name">{item.shortName}</span>
                         <span className="inv-count">x{item.count}</span>
                         <span className="inv-desc">{item.desc}</span>
-                        <button className="inv-use-btn">DÙNG</button>
+                        <button className="inv-use-btn">{t('phone.use')}</button>
                       </div>
                     ))}
                   </div>

@@ -5,32 +5,32 @@
 
 export const WEATHER_TYPES = {
   clear: {
-    key: 'clear', label: 'Sunny', icon: '☀️',
+    key: 'clear', labelKey: 'weather.clear', icon: '☀️',
     cloud: 0.05, precip: 0, kind: 'none', wind: 0.12,
     fog: 1, grip: 1, lightning: 0,
   },
   cloudy: {
-    key: 'cloudy', label: 'Cloudy', icon: '☁️',
+    key: 'cloudy', labelKey: 'weather.cloudy', icon: '☁️',
     cloud: 0.68, precip: 0, kind: 'none', wind: 0.3,
     fog: 0.86, grip: 0.97, lightning: 0,
   },
   windy: {
-    key: 'windy', label: 'Windy', icon: '🍃',
+    key: 'windy', labelKey: 'weather.windy', icon: '🍃',
     cloud: 0.35, precip: 0, kind: 'none', wind: 1,
     fog: 0.95, grip: 0.94, lightning: 0,
   },
   rain: {
-    key: 'rain', label: 'Rainy', icon: '🌧️',
+    key: 'rain', labelKey: 'weather.rain', icon: '🌧️',
     cloud: 0.88, precip: 0.75, kind: 'rain', wind: 0.45,
     fog: 0.6, grip: 0.78, lightning: 0,
   },
   storm: {
-    key: 'storm', label: 'Thunderstorm', icon: '⛈️',
+    key: 'storm', labelKey: 'weather.storm', icon: '⛈️',
     cloud: 1, precip: 1, kind: 'rain', wind: 0.92,
     fog: 0.44, grip: 0.66, lightning: 1,
   },
   snow: {
-    key: 'snow', label: 'Snowy', icon: '🌨️',
+    key: 'snow', labelKey: 'weather.snow', icon: '🌨️',
     cloud: 0.8, precip: 0.72, kind: 'snow', wind: 0.34,
     fog: 0.52, grip: 0.52, lightning: 0,
   },

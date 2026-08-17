@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useGame } from '../game/store.js'
+import { t } from '../game/i18n.js'
 import { ACTIONS, HEAT } from '../game/config.js'
 import { setMuted } from '../game/audio.js'
 import { useInventoryItem } from '../game/systems/inventory.js'
@@ -30,10 +31,10 @@ function Wanted() {
       {showNote && (
         <div className="note">
           {stars === 0
-            ? 'all clear'
+            ? t('hud.allClear')
             : cooling
-              ? 'losing them...'
-              : 'police are chasing!'}
+              ? t('hud.losingThem')
+              : t('hud.chasing')}
         </div>
       )}
     </div>
@@ -44,7 +45,7 @@ function Score() {
   const score = useGame((s) => s.score)
   return (
     <div className="hud-panel hud-score">
-      <div className="label">Fun points</div>
+      <div className="label">{t('hud.score')}</div>
       <div className="value">{score.toLocaleString()}</div>
     </div>
   )
@@ -69,7 +70,7 @@ function BuffBadge() {
   return (
     <div className="hud-panel hud-buff">
       <span className="buff-icon">⚡</span>
-      <span className="buff-name">{activeBuffs.name || 'Sugar Rush'}</span>
+      <span className="buff-name">{t(activeBuffs.nameKey || 'buff.sugarRush')}</span>
       <span className="buff-time">{Math.ceil(activeBuffs.timer)}s</span>
     </div>
   )
@@ -89,10 +90,10 @@ function RunModeBadge({ world }) {
     <button
       className={`hud-panel hud-runmode ${autoRun ? 'on' : ''}`}
       onClick={() => { if (world) world.autoRun = !world.autoRun }}
-      title={autoRun ? 'Đang bật chế độ chạy - giữ Shift để đi chậm [X]' : 'Bật chế độ chạy liên tục [X]'}
+      title={t(autoRun ? 'hud.runModeOnTitle' : 'hud.runModeOffTitle')}
     >
       <span className="run-icon">{autoRun ? '🏃' : '🚶'}</span>
-      <span className="run-label">{autoRun ? 'CHẠY' : 'ĐI BỘ'}</span>
+      <span className="run-label">{t(autoRun ? 'hud.runMode' : 'hud.walkMode')}</span>
       {!touch && <span className="run-key">[X]</span>}
     </button>
   )
@@ -103,7 +104,7 @@ function QuickInventory({ world }) {
   if (inventory.length === 0) return null
   return (
     <div className="hud-panel hud-inventory">
-      <div className="inv-title">🎒 Túi đồ:</div>
+      <div className="inv-title">{t('hud.bag')}</div>
       <div className="inv-slots">
         {inventory.slice(0, 4).map((item, idx) => (
           <button
@@ -134,9 +135,9 @@ function PhoneButton({ world }) {
         if (world) world.phoneOpen = next
         setPhoneOpen(next)
       }}
-      title="Mở Smartphone / Quét mã QR thanh toán [P]"
+      title={t('hud.phoneButtonTitle')}
     >
-      <span>📱 Phone</span>
+      <span>{t('hud.phoneButton')}</span>
       {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
     </button>
   )
@@ -179,8 +180,8 @@ function FlightBadge({ world }) {
       <span className="flight-speed">{flight.speed}<small>km/h</small></span>
       <span className="flight-state">
         {flight.tour
-          ? `${flight.orbiting ? 'Đang vòng quanh' : 'Đang bay tới'} ${flight.tour}`
-          : flight.landed ? '🛬 Đã đáp — ra được' : 'Đang bay'}
+          ? t(flight.orbiting ? 'flight.orbiting' : 'flight.goingTo', { place: flight.tour })
+          : t(flight.landed ? 'flight.landed' : 'flight.flying')}
       </span>
     </div>
   )
@@ -197,9 +198,9 @@ function MapButton({ world }) {
         if (world) world.mapOpen = next
         setMapOpen(next)
       }}
-      title="Mở bản đồ, chọn khu vực để tự động chạy tới [M]"
+      title={t('hud.mapButtonTitle')}
     >
-      <span>🗺️ Bản đồ</span>
+      <span>{t('hud.mapButton')}</span>
     </button>
   )
 }
@@ -216,12 +217,12 @@ function TravelBanner({ world }) {
     return (
       <div className="hud-panel hud-travel">
         <span className="travel-icon">{icon || '🏃'}</span>
-        <span className="travel-text">Đang chạy tới <b>{name}</b></span>
+        <span className="travel-text">{t('travel.running')} <b>{name}</b></span>
         <button
           className="travel-stop"
-          onClick={() => world && cancelTravel(world, 'Đã dừng tự động di chuyển')}
+          onClick={() => world && cancelTravel(world, t('travel.stopped'))}
         >
-          ⏹ Dừng{touch ? '' : ' (hoặc bấm WASD)'}
+          {t('travel.stop')}{touch ? '' : t('travel.stopHint')}
         </button>
       </div>
     )
@@ -254,6 +255,7 @@ function Prompt() {
 
 export default function HUD({ world }) {
   const phase = useGame((s) => s.phase)
+  useGame((s) => s.lang) // đổi ngôn ngữ là cả HUD vẽ lại
   const touch = useGame((s) => s.touch)
   if (phase !== 'playing') return null
   return (

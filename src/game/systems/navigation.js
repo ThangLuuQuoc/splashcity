@@ -11,6 +11,7 @@ import { nearestNode } from '../city.js'
 import { landmarkPosition } from '../landmarks.js'
 import { axisForward, axisRight, uiCaptured } from './input.js'
 import { playBeep } from '../audio.js'
+import { t } from '../i18n.js'
 
 /**
  * Đường ngắn nhất theo số giao lộ, trả về danh sách điểm đi qua.
@@ -196,13 +197,13 @@ export function createTravel() {
 /** Lý do không đi được, hoặc null nếu đi được. */
 export function travelBlockedReason(world) {
   const p = world.player
-  if (world.phase !== 'playing') return 'Chưa vào ván chơi'
-  if (world.interior !== 'none') return 'Hãy ra khỏi toà nhà trước khi tự động di chuyển'
-  if (p.mode === 'car') return 'Hãy xuống xe trước khi tự động chạy'
-  if (p.mode === 'train') return 'Hãy xuống tàu trước khi tự động chạy'
+  if (world.phase !== 'playing') return t('travel.notPlaying')
+  if (world.interior !== 'none') return t('travel.leaveBuilding')
+  if (p.mode === 'car') return t('travel.leaveCar')
+  if (p.mode === 'train') return t('travel.leaveTrain')
   // Đang bay thì trực thăng quyết định vị trí người chơi, hệ dẫn đường sẽ đẩy hướng vào
   // hư không rồi tự huỷ vì tưởng bị kẹt - nói thẳng ra còn dễ hiểu hơn.
-  if (p.mode === 'heli') return 'Hãy hạ cánh trước khi tự động chạy'
+  if (p.mode === 'heli') return t('travel.landFirst')
   return null
 }
 
@@ -217,13 +218,13 @@ export function startTravel(world, landmark) {
   const p = world.player
   const arriveRadius = landmark.arriveRadius || NAV.arriveRadius
   if (Math.hypot(dest.x - p.x, dest.z - p.z) < arriveRadius) {
-    setTravelMessage(world, `Bạn đang ở ${landmark.name} rồi!${landmark.enterHint ? ' ' + landmark.enterHint : ''}`)
+    setTravelMessage(world, t('travel.alreadyThere', { place: landmark.name }) + (landmark.enterHint ? ' ' + landmark.enterHint : ''))
     return false
   }
 
   const path = findRoadPath(world.city, p, dest, landmark.approach)
   if (!path) {
-    setTravelMessage(world, 'Không tìm được đường tới đó')
+    setTravelMessage(world, t('travel.noRoute'))
     return false
   }
 
@@ -278,7 +279,7 @@ export function updateTravel(world, dt) {
   // (mũi tên chọn mục, WASD bị bỏ qua), nên không tính là ý định lái.
   if (!uiCaptured(world) &&
     (Math.abs(axisForward()) > NAV.cancelDeflection || Math.abs(axisRight()) > NAV.cancelDeflection)) {
-    return cancelTravel(world, 'Đã dừng tự động di chuyển')
+    return cancelTravel(world, t('travel.stopped'))
   }
 
   const p = world.player
@@ -287,7 +288,7 @@ export function updateTravel(world, dt) {
   if (Math.hypot(t.destX - p.x, t.destZ - p.z) < (t.arriveRadius || NAV.arriveRadius)) {
     const { name, icon, enterHint } = t
     cancelTravel(world)
-    setTravelMessage(world, `${icon} Đã tới ${name}!${enterHint ? ' ' + enterHint : ''}`)
+    setTravelMessage(world, t('travel.arrived', { icon, place: name }) + (enterHint ? ' ' + enterHint : ''))
     return
   }
 
@@ -314,7 +315,7 @@ export function updateTravel(world, dt) {
   if (moved < NAV.stuckDistance * dt) {
     t.stuckTimer += dt
     if (t.stuckTimer > NAV.stuckTimeout) {
-      return cancelTravel(world, 'Bị chặn đường - hãy tự đi tiếp nhé!')
+      return cancelTravel(world, t('travel.blocked'))
     }
   } else {
     t.stuckTimer = 0

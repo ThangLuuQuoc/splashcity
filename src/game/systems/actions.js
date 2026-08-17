@@ -6,6 +6,7 @@ import { input, keyDown } from './input.js'
 import { playThrow, playPickup, playBeep } from '../audio.js'
 import { findBoardableCar, dwellingStation } from './train.js'
 import { nearHelicopter, toggleHeliTour, tourTarget } from './helicopter.js'
+import { t } from '../i18n.js'
 
 const STAMPS_PER_TAG = 6
 
@@ -236,57 +237,43 @@ export function updatePrompt(world) {
     const train = world.trains[p.train]
     const station = train && dwellingStation(world, train)
     return station
-      ? set(`${station.name} — ga tàu dừng`, 'hint')
-      : set('Đang đi tàu trên cao Skyline', 'hint')
+      ? set(t('prompt.trainStation', { name: station.name }), 'hint')
+      : set(t('prompt.trainRiding'), 'hint')
   }
 
   if (p.mode === 'heli') {
     const target = tourTarget(world)
     if (target) {
       // Kind 'hint' để dòng này hiện cả trên tablet - Prompt() lọc bỏ 'controls' ở touch.
-      return set(
-        `🛩️ Bay tự động — đang ngắm ${target.icon} ${target.name} • chạm cần lái để tự lái lại`,
-        'hint',
-      )
+      return set(t('prompt.heliTour', { icon: target.icon, place: target.name }), 'hint')
     }
     const alt = Math.round(world.heli.y)
-    return set(
-      `🚁 Cao ${alt}m • W/S bay tiến lùi • A/D quay • Space lên • Shift xuống • X bay tự động • E hạ cánh`,
-      'controls',
-    )
+    return set(t('prompt.heliControls', { alt }), 'controls')
   }
 
   if (p.mode === 'car') {
-    return set('E xuống xe • Space phanh tay • Click ném bóng nước', 'controls')
+    return set(t('prompt.carControls'), 'controls')
   }
 
   if (nearHelicopter(world)) {
-    return set('[E] Lên trực thăng bay ngắm thành phố', 'hint')
+    return set(t('prompt.boardHeli'), 'hint')
   }
 
   if (findBoardableCar(world)) {
-    return set('Lên tàu điện [E]', 'hint')
+    return set(t('prompt.boardTrain'), 'hint')
   }
   for (let i = 0; i < world.cars.length; i++) {
     const c = world.cars[i]
     if (Math.hypot(c.x - p.x, c.z - p.z) < 4.2) {
-      return set('Lên xe [E]', 'hint')
+      return set(t('prompt.boardCar'), 'hint')
     }
   }
   for (let i = 0; i < world.fountains.length; i++) {
     const f = world.fountains[i]
     if (Math.hypot(f.x - p.x, f.z - p.z) < ACTIONS.refillRadius + 1) {
-      return set(
-        world.ammo < ACTIONS.maxAmmo ? 'Đang nạp bóng nước...' : 'Bóng nước đầy!',
-        'hint',
-      )
+      return set(t(world.ammo < ACTIONS.maxAmmo ? 'prompt.refilling' : 'prompt.refillFull'), 'hint')
     }
   }
-  set(
-    world.autoRun
-      ? 'Click ném • F xịt sơn • P điện thoại • X tắt chạy • Shift đi chậm'
-      : 'Click ném • F xịt sơn • P điện thoại • X bật chế độ chạy • 1-4 dùng item',
-    'controls',
-  )
+  set(t(world.autoRun ? 'prompt.footControlsRunning' : 'prompt.footControls'), 'controls')
 }
 

@@ -114,6 +114,35 @@
 }
 
 .weather-chip.clock { font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+
+/* Chip đổi ngôn ngữ - hiện mã ngôn ngữ SẼ chuyển sang, không phải mã đang dùng */
+.weather-chip.lang-chip { gap: 4px; }
+.weather-chip.lang-chip .lang-code {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+.weather-chip.lang-chip:hover { background: rgba(56, 176, 0, 0.35); }
+
+/* Trên màn hình bắt đầu, chip nằm riêng một dòng phía trên phần mô tả */
+.start-lang {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.start-lang .weather-chip {
+  background: rgba(12, 20, 34, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 6px 14px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font: inherit;
+  pointer-events: auto;
+}
 .weather-icon { font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
 
 

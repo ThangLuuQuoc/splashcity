@@ -1,3 +1,4 @@
+import { t } from './i18n.js'
 // Danh sách các khu vực đặc biệt của thành phố - MỘT nguồn sự thật duy nhất, dùng
 // chung cho cả minimap (vẽ mốc) và bản đồ chọn điểm đến (danh sách bấm được).
 //
@@ -13,64 +14,64 @@ export function buildLandmarks(city) {
   const list = [
     {
       id: 'plaza',
-      name: 'Quảng trường Trung tâm',
+      name: t('place.plaza'),
       icon: '⛲',
       color: '#4fc3f7',
       kind: 'plaza',
-      desc: 'Sân nước giữa thành phố, chỗ bắt đầu quậy phá',
+      desc: t('place.plazaDesc'),
       x: city.plaza.x,
       z: city.plaza.z,
     },
     {
       id: 'police',
-      name: 'Trụ sở Cảnh sát',
+      name: t('place.police'),
       icon: '🚓',
       color: '#1d3557',
       kind: 'interior',
-      desc: 'Vào được: bảng truy nã, kho bóng nước siêu cấp, phòng giam',
+      desc: t('place.policeDesc'),
       x: city.policeDoor.x,
       z: city.policeDoor.z,
       // Cửa nằm ngay trên mặt tiền toà nhà, sân trống chỉ ở phía +z. Không có điểm
       // tiếp cận này thì đường đi có thể dẫn từ phía sau và người chơi đâm vào tường.
       approach: { x: city.policeDoor.x, z: city.policeDoor.z + 9 },
       arriveRadius: 6.0,
-      enterHint: 'Bấm E để vào',
+      enterHint: t('place.enterHint'),
     },
     {
       id: 'supermarket',
-      name: 'Siêu thị Splash Mart',
+      name: t('place.mart'),
       icon: '🛒',
       color: '#d62828',
       kind: 'interior',
-      desc: 'Vào được: 2 tầng bách hoá, thang cuốn, quét QR thanh toán',
+      desc: t('place.martDesc'),
       x: city.supermarketDoor.x,
       z: city.supermarketDoor.z,
       approach: { x: city.supermarketDoor.x, z: city.supermarketDoor.z + 9 },
       arriveRadius: 6.0,
-      enterHint: 'Bấm E để vào',
+      enterHint: t('place.enterHint'),
     },
   ]
 
   list.push({
     id: 'helipad',
-    name: 'Sân đỗ Trực thăng',
+    name: t('place.helipad'),
     icon: '🚁',
     color: '#ffd166',
     kind: 'interior', // dùng chung kiểu "vào được" để có vòng nhấp nháy trên minimap
-    desc: 'Có trực thăng đậu sẵn - bấm E để bay ngắm thành phố từ trên cao',
+    desc: t('place.helipadDesc'),
     x: city.helipad.x,
     z: city.helipad.z,
-    enterHint: 'Bấm E để lên trực thăng',
+    enterHint: t('place.heliHint'),
   })
 
   city.parks.forEach((park, i) => {
     list.push({
       id: `park_${i}`,
-      name: `Công viên ${i === 0 ? 'Cây Xanh' : 'Hồ Sen'}`,
+      name: t(i === 0 ? 'place.park1' : 'place.park2'),
       icon: '🌳',
       color: '#38b000',
       kind: 'park',
-      desc: 'Bãi cỏ rộng, nhiều cây và người đi bộ',
+      desc: t('place.parkDesc'),
       x: park.x,
       z: park.z,
     })
@@ -79,11 +80,11 @@ export function buildLandmarks(city) {
   city.rail.stations.forEach((st) => {
     list.push({
       id: `station_${st.index}`,
-      name: `Ga ${st.name}`,
+      name: t('place.station', { name: st.name }),
       icon: '🚉',
       color: '#ffd23f',
       kind: 'station',
-      desc: 'Ga tàu điện trên cao Skyline',
+      desc: t('place.stationDesc'),
       x: st.x,
       z: st.z,
     })
@@ -93,11 +94,11 @@ export function buildLandmarks(city) {
   // cần chọn đúng cái nào - nên gộp thành một mục tự tìm cái gần nhất.
   list.push({
     id: 'fountain_nearest',
-    name: 'Vòi nước gần nhất',
+    name: t('place.fountain'),
     icon: '💧',
     color: '#4fc3f7',
     kind: 'fountain',
-    desc: 'Nạp đầy bóng nước',
+    desc: t('place.fountainDesc'),
     dynamic: true,
     x: city.plaza.x,
     z: city.plaza.z,

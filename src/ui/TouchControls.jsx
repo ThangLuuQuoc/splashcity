@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { input, virtualHold, virtualTap } from '../game/systems/input.js'
+import { useGame } from '../game/store.js'
+import { t } from '../game/i18n.js'
 
 // The whole touch layer is one full-screen surface plus a button cluster.
 // Pointers are tracked by id so a thumb on the stick, a thumb dragging the
@@ -15,6 +17,7 @@ export default function TouchControls({ world }) {
   const baseRef = useRef(null)
   const pointers = useRef(new Map())
   const [mode, setMode] = useState('foot')
+  useGame((s) => s.lang) // đổi ngôn ngữ là nhãn nút vẽ lại
 
   // Button labels follow what the player is currently doing.
   useEffect(() => {
@@ -128,17 +131,17 @@ export default function TouchControls({ world }) {
       <div className="touch-buttons">
         <HoldButton
           className="big throw"
-          label="Throw"
+          label={t('btn.throw')}
           icon="💧"
           onChange={(held) => { input.fire = held }}
         />
         <TapButton
-          label={inHeli ? 'Land' : inCar || onTrain ? 'Get out' : 'Interact'}
+          label={t(inHeli ? 'btn.land' : inCar || onTrain ? 'btn.getOut' : 'btn.interact')}
           icon={inHeli ? '🛬' : inCar || onTrain ? '🚪' : '⚡'}
           onTap={() => virtualTap('KeyE')}
         />
         <TapButton
-          label="Phone"
+          label={t('btn.phone')}
           icon="📱"
           onTap={() => virtualTap('KeyP')}
         />
@@ -147,18 +150,18 @@ export default function TouchControls({ world }) {
             chỉ làm chật màn hình. */}
         {inHeli && (
           <TapButton
-            label="Auto"
+            label={t('btn.auto')}
             icon="🛩️"
             onTap={() => virtualTap('KeyX')}
           />
         )}
         <TapButton
-          label="Map"
+          label={t('btn.map')}
           icon="🗺️"
           onTap={() => virtualTap('KeyM')}
         />
         <HoldButton
-          label={inHeli ? 'Up' : inCar ? 'Brake' : 'Jump'}
+          label={t(inHeli ? 'btn.up' : inCar ? 'btn.brake' : 'btn.jump')}
           icon={inHeli ? '🔼' : inCar ? '🛑' : '⬆️'}
           className={inHeli ? 'climb' : ''}
           onChange={(held) => virtualHold('Space', held)}
@@ -169,14 +172,14 @@ export default function TouchControls({ world }) {
             cao một tablet nằm ngang. */}
         {inHeli ? (
           <HoldButton
-            label="Down"
+            label={t('btn.down')}
             icon="🔽"
             className="climb"
             onChange={(held) => virtualHold('ShiftLeft', held)}
           />
         ) : (
           <HoldButton
-            label="Spray"
+            label={t('btn.spray')}
             icon="🎨"
             disabled={inCar || onTrain}
             onChange={(held) => virtualHold('KeyF', held)}

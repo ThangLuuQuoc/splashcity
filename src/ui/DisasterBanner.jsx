@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { triggerDisaster, disasterLabel } from '../game/systems/disasters.js'
+import { t } from '../game/i18n.js'
 
 // Reads the disaster state on its own interval rather than through the store:
 // the countdown ticks every frame and has no business re-rendering the HUD.
@@ -29,14 +30,14 @@ export default function DisasterBanner({ world }) {
       <div className="disaster-buttons">
         <button
           className="disaster-chip"
-          title="Send a tornado (T)"
+          title={t('disaster.sendTornado')}
           onClick={(e) => { e.currentTarget.blur(); triggerDisaster(world, 'tornado') }}
         >
           🌪️
         </button>
         <button
           className="disaster-chip"
-          title="Send a tsunami (Y)"
+          title={t('disaster.sendTsunami')}
           onClick={(e) => { e.currentTarget.blur(); triggerDisaster(world, 'tsunami') }}
         >
           🌊

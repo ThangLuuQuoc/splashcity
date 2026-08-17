@@ -6,6 +6,8 @@ import { useGame } from './game/store.js'
 import GameLoop from './game/GameLoop.jsx'
 import { attachInput, requestLock, releaseLock, input, uiCaptured } from './game/systems/input.js'
 import { unlockAudio, updateSiren } from './game/audio.js'
+import { onLangChange } from './game/i18n.js'
+import { buildLandmarks } from './game/landmarks.js'
 import { PALETTE } from './game/config.js'
 
 import City from './render/City.jsx'
@@ -106,6 +108,12 @@ export default function App() {
   }, [world])
 
   useEffect(() => attachInput(), [])
+
+  // Tên khu vực được dựng một lần lúc tạo world, nên đổi ngôn ngữ phải dựng lại - nếu
+  // không thì bản đồ và minimap vẫn hiện tên của ngôn ngữ cũ suốt phiên.
+  useEffect(() => onLangChange(() => {
+    world.landmarks = buildLandmarks(world.city)
+  }), [world])
 
   // Overlay mở ra là nhả con trỏ chuột ngay. Không có bước này thì con trỏ vẫn bị
   // pointer lock giữ và người chơi phải bấm Esc mới bấm/chọn được trong overlay.

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { getLang, setLang as applyLang, nextLang } from './i18n.js'
 
 // Only what the HUD needs. Systems push into this a few times a second, never
 // every frame, so React re-renders stay cheap.
@@ -16,6 +17,10 @@ export const useGame = create((set) => ({
   stats: { splashed: 0, bumped: 0, tagged: 0, busted: 0 },
   muted: false,
   touch: false, // on-screen controls are showing
+
+  // Ngôn ngữ: nguồn sự thật nằm ở i18n.js (các hệ thống game ngoài React cũng đọc nó);
+  // đây chỉ là bản sao để component đang hiển thị chữ biết mà vẽ lại.
+  lang: getLang(),
 
   // Interior, Phone & Shopping state
   interior: 'none',
@@ -37,6 +42,8 @@ export const useGame = create((set) => ({
   setBusted: (busted) => set({ busted }),
   setPhoneOpen: (phoneOpen) => set({ phoneOpen }),
   toggleMute: () => set((s) => ({ muted: !s.muted })),
+  setLang: (lang) => set({ lang: applyLang(lang) }),
+  toggleLang: () => set({ lang: applyLang(nextLang()) }),
   sync: (patch) => set(patch),
 }))
 

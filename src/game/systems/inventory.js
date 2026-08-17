@@ -57,7 +57,7 @@ export function useInventoryItem(world, itemId) {
       banana.rot = Math.random() * Math.PI * 2
       banana.life = 45 // Tồn tại 45 giây
       playBananaSlip()
-      world.prompt = '🍌 Đã thả vỏ chuối! Cảnh sát & NPC đạp trúng sẽ trượt ngã 360°!'
+      world.prompt = t('item.bananaDropped')
       world.promptKind = 'shopping'
     }
   } else if (item.type === 'snack_speed') {
@@ -65,28 +65,28 @@ export function useInventoryItem(world, itemId) {
     world.activeBuffs = {
       speedBoost: 1.5,
       timer: 12, // 12 giây
-      name: 'Sugar Rush (Tăng 50% Tốc độ)',
+      nameKey: 'buff.sugarRush',
     }
     playItemUse()
-    world.prompt = `⚡ Đã dùng ${item.shortName}! Tốc độ chạy tăng 50% trong 12s!`
+    world.prompt = t('item.sugarRush', { item: item.shortName })
     world.promptKind = 'shopping'
   } else if (item.type === 'mrbeast_speed' || item.type === 'snack_super_speed') {
     // Ăn Feastables MrBeast tăng 85% tốc độ
     world.activeBuffs = {
       speedBoost: 1.85,
       timer: 18, // 18 giây
-      name: 'MrBeast Energy (Tăng 85% Tốc độ)',
+      nameKey: 'buff.mrbeast',
     }
     playItemUse()
     world.camera.shake = 0.25
-    world.prompt = `🔥 Đã nạp năng lượng ${item.shortName}! Siêu tốc độ kích hoạt!`
+    world.prompt = t('item.superRush', { item: item.shortName })
     world.promptKind = 'shopping'
   } else if (item.type === 'weapon_upgrade') {
     // Trang bị súng nước Super Soaker Titan
     world.ammo = 16
     world.hasMegaBalloon = true
     playPickup()
-    world.prompt = '🔫 Đã trang bị Super Soaker Titan! Đạn đầy & nhận Bóng Nước Siêu Cấp 2×!'
+    world.prompt = t('item.soaker')
     world.promptKind = 'shopping'
   } else if (item.type === 'toothpaste') {
     // Bôi vệt kem đánh răng P/S Dâu (tạo vệt decal hồng + vệt trơn trượt vật lý)
@@ -108,7 +108,7 @@ export function useInventoryItem(world, itemId) {
       radius: 2.2,
       life: 30, // 30 giây
     })
-    world.prompt = '🍓 Đã bôi kem đánh răng P/S dâu tạo vùng trơn trượt vật lý trên sàn!'
+    world.prompt = t('item.toothpaste')
     world.promptKind = 'shopping'
   } else if (item.type === 'fruit_throw') {
     // Ném hoa quả (táo, nho) với âm thanh bốp
@@ -126,7 +126,7 @@ export function useInventoryItem(world, itemId) {
       balloon.life = 0
       balloon.isMega = false
     }
-    world.prompt = `🎯 Đã ném ${item.shortName}!`
+    world.prompt = t('item.thrown', { item: item.shortName })
     world.promptKind = 'shopping'
   }
 
