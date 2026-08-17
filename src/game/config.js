@@ -132,6 +132,8 @@ export const CAMERA = {
   carHeight: 6,
   trainDistance: 16,
   trainHeight: 7,
+  heliDistance: 24,
+  heliHeight: 9,
   lookAhead: 3,
   followLerp: 7,
   pitchMin: -0.25,
@@ -240,3 +242,212 @@ export const PALETTE = {
   shirts: ['#ff6b6b', '#4ecdc4', '#ffe66d', '#a29bfe', '#fd79a8', '#55efc4', '#74b9ff'],
   skin: ['#f2d5b8', '#e0ac82', '#c68863', '#8d5524', '#ffe0bd'],
 }
+
+// Trực thăng ngắm thành phố từ trên không
+export const HELI = {
+  boardRadius: 5.0, // đứng gần cỡ này là bấm E lên được
+  bodyRadius: 3.0, // bán kính va chạm với toà nhà
+  // Vận tốc tới hạn của mô hình này là accel/drag, nên accel phải đủ lớn để với tới
+  // maxSpeed - nếu không thì maxSpeed thành số chết và máy bay bay chậm hơn hẳn ý định.
+  maxSpeed: 34, // ~122 km/h, bay ngang thành phố 420m trong khoảng 13 giây
+  accel: 52,
+  drag: 1.5,
+  yawRate: 1.5, // rad mỗi giây
+  climbRate: 14,
+  // Nhả nút lên/xuống thì dừng dâng trong khoảng climbRate/climbDamp mét. Để 6 thì
+  // trôi thêm 2.3m mỗi lần nhả - treo máy bay ngắm cảnh thấy bồng bềnh, khó canh.
+  // Để 14 thì trôi ~1m: vẫn mềm chứ không phanh cứng, mà canh cao độ đã ăn tay.
+  climbDamp: 14,
+  maxAltitude: 110, // vẫn thấp hơn trần mây, đủ nhìn trọn thành phố
+  groundClearance: 1.1, // cao độ khi càng đáp chạm sàn
+  landSpeed: 3.0, // hạ nhanh hơn mức này thì chưa cho xuống máy bay
+  rotorSpin: 26, // rad mỗi giây khi động cơ chạy
+  tiltMax: 0.28, // độ nghiêng thân khi tăng tốc / vào cua, chỉ để nhìn cho đẹp
+
+  // Chế độ bay tự động ngắm cảnh: máy bay tự vòng quanh từng khu vực đặc biệt.
+  tour: {
+    // Toà nhà cao nhất thành phố là 43.7m, nên bay ở 52m là chắc chắn không đụng gì.
+    altitude: 52,
+    cruiseSpeed: 19, // chậm hơn hẳn tốc độ lái tay (34) cho có thời gian ngắm
+    orbitRadius: 34, // bán kính vòng quanh mỗi khu vực
+    orbitSpeed: 0.32, // rad mỗi giây -> một vòng khoảng 20 giây
+    orbitTurns: 1, // số vòng quanh mỗi khu vực trước khi đi tiếp
+    climbScale: 0.35, // lúc còn đang lấy độ cao thì bay ngang chậm lại cho an toàn
+    steerLerp: 1.8, // độ mượt khi đổi hướng bay
+    cameraLerp: 0.8, // camera tự nhìn theo, nhưng nhẹ tay để người chơi vẫn kéo được
+  },
+}
+
+// Tự động chạy tới khu vực đã chọn trên bản đồ
+export const NAV = {
+  speedBoost: 1.8, // nhân vào tốc độ chạy nước rút, để đi xa không phải ngồi đợi
+  waypointRadius: 5.0, // đến gần giao lộ cỡ này thì chuyển sang điểm kế tiếp
+  arriveRadius: 4.0, // coi như đã tới đích
+  cancelDeflection: 0.3, // người chơi đẩy cần / bấm phím quá mức này thì nhường tay lái
+  cameraLerp: 2.2, // độ nhanh camera quay theo hướng chạy
+  stuckDistance: 0.6, // dưới mức này (mét mỗi giây) coi như đang bị chặn
+  stuckTimeout: 1.6, // bị chặn quá lâu thì thoát chế độ tự động
+  messageDuration: 3.0,
+}
+
+export const INTERIORS = {
+  enterDistance: 7.5,
+  policeOffset: { x: -400, y: -80, z: 0 },
+  supermarketOffset: { x: 400, y: -80, z: 0 },
+  floorHeight: 6.0, // Tầng 2 cách tầng 1 là 6m
+}
+
+export const SUPERMARKET_PRODUCTS = [
+  // Hóa mỹ phẩm (Tầng 1)
+  {
+    id: 'ps_strawberry',
+    name: 'Kem đánh răng P/S Dâu Trẻ Em',
+    shortName: 'P/S Dâu',
+    category: 'personal_care',
+    price: 32000,
+    shelf: 'shelf_care',
+    color: '#e63946',
+    icon: '🪥',
+    desc: 'Bôi vệt dâu thơm lừng trơn trượt vật lý lên sàn nhà',
+    type: 'toothpaste',
+  },
+  // Bánh & Snack (Tầng 1)
+  {
+    id: 'oreo',
+    name: 'Bánh Quy Kẹp Kem Oreo',
+    shortName: 'Bánh Oreo',
+    category: 'snacks',
+    price: 24000,
+    shelf: 'shelf_snacks_1',
+    color: '#1a3b5c',
+    icon: '🍪',
+    desc: 'Ăn vào nhận Sugar Rush tăng 50% tốc độ chạy',
+    type: 'snack_speed',
+  },
+  {
+    id: 'lays_classic',
+    name: "Snack Khoai Tây Lay's Cổ Điển",
+    shortName: "Lay's Vàng",
+    category: 'snacks',
+    price: 22000,
+    shelf: 'shelf_snacks_1',
+    color: '#ffb703',
+    icon: '🥔',
+    desc: 'Snack giòn tan tăng nhẹ năng lượng',
+    type: 'snack_speed',
+  },
+  {
+    id: 'pringles',
+    name: 'Snack Khoai Tây Ống Pringles',
+    shortName: 'Pringles',
+    category: 'snacks',
+    price: 48000,
+    shelf: 'shelf_snacks_2',
+    color: '#d90429',
+    icon: '🥫',
+    desc: 'Ăn vào nhận Sugar Rush chạy siêu nhanh',
+    type: 'snack_speed',
+  },
+  // Bánh kẹo & Sô-cô-la (Tầng 1)
+  {
+    id: 'feastables',
+    name: 'Sô-cô-la MrBeast Feastables',
+    shortName: 'MrBeast Choco',
+    category: 'sweets',
+    price: 65000,
+    shelf: 'shelf_sweets',
+    color: '#00b4d8',
+    icon: '⚡',
+    desc: 'MrBeast Energy tăng 85% tốc độ chạy cực đại trong 15s',
+    type: 'mrbeast_speed',
+  },
+  {
+    id: 'meiji_choco',
+    name: 'Sô-cô-la Sữa Meiji Milk Chocolate',
+    shortName: 'Meiji Choco',
+    category: 'sweets',
+    price: 38000,
+    shelf: 'shelf_sweets',
+    color: '#4a2810',
+    icon: '🍫',
+    desc: 'Hương vị sô-cô-la ngọt ngào thư giãn',
+    type: 'snack_speed',
+  },
+  {
+    id: 'kitkat',
+    name: 'Bánh Xốp Phủ Sô-cô-la KitKat',
+    shortName: 'KitKat',
+    category: 'sweets',
+    price: 26000,
+    shelf: 'shelf_sweets',
+    color: '#d62828',
+    icon: '🍫',
+    desc: 'Nghỉ xả hơi xơi KitKat tăng tốc độ',
+    type: 'snack_speed',
+  },
+  // Trái cây tươi (Tầng 1)
+  {
+    id: 'banana',
+    name: 'Chuối Già Nam Mỹ Tươi',
+    shortName: 'Chuối Nam Mỹ',
+    category: 'fruits',
+    price: 28000,
+    shelf: 'shelf_fruits',
+    color: '#ffd166',
+    icon: '🍌',
+    desc: 'Ăn xong thả vỏ chuối ra sàn làm cảnh sát và NPC trượt té 360 độ',
+    type: 'banana_peel',
+  },
+  {
+    id: 'grapes',
+    name: 'Nho Mẫu Đơn Xanh Tươi',
+    shortName: 'Nho Mẫu Đơn',
+    category: 'fruits',
+    price: 75000,
+    shelf: 'shelf_fruits',
+    color: '#9b5de5',
+    icon: '🍇',
+    desc: 'Ném chùm nho trêu chọc mọi người xung quanh',
+    type: 'fruit_throw',
+  },
+  {
+    id: 'queen_apple',
+    name: 'Táo Queen New Zealand Giòn Ngọt',
+    shortName: 'Táo Queen',
+    category: 'fruits',
+    price: 45000,
+    shelf: 'shelf_fruits',
+    color: '#c1121f',
+    icon: '🍎',
+    desc: 'Táo đỏ giòn ngọt, có thể ăn hoặc ném',
+    type: 'fruit_throw',
+  },
+  // Đồ chơi & Súng nước (Tầng 2)
+  {
+    id: 'supersoaker_titan',
+    name: 'Súng Nước Super Soaker Titan',
+    shortName: 'Súng Soaker',
+    category: 'toys',
+    price: 150000,
+    shelf: 'shelf_toys',
+    color: '#06d6a0',
+    icon: '🔫',
+    desc: 'Trang bị súng nước siêu cấp: nạp đầy đạn và nhận Mega Balloon!',
+    type: 'weapon_upgrade',
+  },
+  // Nước giải khát (Tầng 2)
+  {
+    id: 'sting_strawberry',
+    name: 'Nước Tăng Lực Sting Dâu Tây',
+    shortName: 'Sting Dâu',
+    category: 'drinks',
+    price: 15000,
+    shelf: 'shelf_drinks',
+    color: '#e63946',
+    icon: '🥤',
+    desc: 'Uống vào hồi phục thể lực và nhận buff chạy nước rút trong 12s',
+    type: 'snack_speed',
+  },
+]
+
+

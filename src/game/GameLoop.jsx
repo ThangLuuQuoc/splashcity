@@ -9,11 +9,14 @@ import { updateWeather, cycleWeather, skipTimePhase } from './systems/weather.js
 import { updateDisasters, triggerDisaster } from './systems/disasters.js'
 import { keyPressed } from './systems/input.js'
 import { updatePedestrians, carsVersusPedestrians } from './systems/pedestrians.js'
-import { resolveVehicleCollisions, updateProps } from './systems/physics.js'
+import { resolveVehicleCollisions, updateProps, resolveBananas } from './systems/physics.js'
 import { updateActions, updatePrompt } from './systems/actions.js'
 import { updateProjectiles } from './systems/projectiles.js'
 import { updatePolice, clearPolice } from './systems/police.js'
 import { updateHeat } from './systems/heat.js'
+import { updateInteriors } from './systems/interiors.js'
+import { updateTravel } from './systems/navigation.js'
+import { updateInventory } from './systems/inventory.js'
 import { endFrame } from './systems/input.js'
 import { updateSiren } from './audio.js'
 
@@ -26,7 +29,7 @@ export default function GameLoop({ world }) {
   const sync = useGame((s) => s.sync)
   const setPhase = useGame((s) => s.setPhase)
   const setBusted = useGame((s) => s.setBusted)
-  const mirror = useRef({ score: -1, stars: -1, ammo: -1, prompt: '', cooling: false })
+  const mirror = useRef({ score: -1, stars: -1, ammo: -1, prompt: '', cooling: false, phoneOpen: false, autoRun: false, interior: 'none', cartLen: -1, invLen: -1 })
   const syncTimer = useRef(0)
 
   useFrame((_, delta) => {
@@ -77,6 +80,9 @@ export default function GameLoop({ world }) {
     if (keyPressed('KeyY')) triggerDisaster(world, 'tsunami')
 
     updateCamera(world, dt)
+    // Trước updatePlayer: hệ dẫn đường chỉ ghi hướng mong muốn, updatePlayer mới là
+    // nơi thực sự di chuyển người chơi.
+    updateTravel(world, dt)
     // Trains move before the player so a rider is carried by this frame's
     // position rather than lagging one frame behind the carriage.
     updateTrains(world, dt)
@@ -84,15 +90,20 @@ export default function GameLoop({ world }) {
     updateTraffic(world, dt)
     updatePedestrians(world, dt)
     resolveVehicleCollisions(world, dt)
+    resolveBananas(world, dt)
     carsVersusPedestrians(world, dt)
     updateProps(world, dt)
     updateActions(world, dt)
+    updateInteriors(world, dt)
+    updateInventory(world, dt)
     updateProjectiles(world, dt)
     // Runs after the movement systems so it has the last word on where
     // everything ends up when it is throwing the city around.
-    updateDisasters(world, dt)
-    updatePolice(world, dt)
-    updateHeat(world, dt)
+    if (world.interior === 'none') {
+      updateDisasters(world, dt)
+      updatePolice(world, dt)
+      updateHeat(world, dt)
+    }
     updatePrompt(world)
 
     // --- camera ----------------------------------------------------------
@@ -122,7 +133,16 @@ export default function GameLoop({ world }) {
       m.stars !== world.stars ||
       m.ammo !== world.ammo ||
       m.prompt !== world.prompt ||
-      m.cooling !== !!world.cooling
+      m.cooling !== !!world.cooling ||
+      m.phoneOpen !== world.phoneOpen ||
+      m.autoRun !== world.autoRun ||
+      m.mapOpen !== world.mapOpen ||
+      m.travelling !== world.travel.active ||
+      m.travelMessage !== world.travel.message ||
+      m.interior !== world.interior ||
+      m.cartLen !== world.cart.length ||
+      m.invLen !== world.inventory.length
+
     if (changed || syncTimer.current <= 0) {
       syncTimer.current = 0.2
       m.score = world.score
@@ -130,6 +150,15 @@ export default function GameLoop({ world }) {
       m.ammo = world.ammo
       m.prompt = world.prompt
       m.cooling = !!world.cooling
+      m.phoneOpen = world.phoneOpen
+      m.autoRun = world.autoRun
+      m.mapOpen = world.mapOpen
+      m.travelling = world.travel.active
+      m.travelMessage = world.travel.message
+      m.interior = world.interior
+      m.cartLen = world.cart.length
+      m.invLen = world.inventory.length
+
       sync({
         score: world.score,
         stars: world.stars,
@@ -139,6 +168,18 @@ export default function GameLoop({ world }) {
         promptKind: world.promptKind,
         cooling: !!world.cooling,
         stats: world.stats,
+        interior: world.interior,
+        phoneOpen: world.phoneOpen,
+        autoRun: world.autoRun,
+        mapOpen: world.mapOpen,
+        travelling: world.travel.active,
+        travelName: world.travel.name,
+        travelIcon: world.travel.icon,
+        travelMessage: world.travel.message,
+        inventory: [...world.inventory],
+        cart: [...world.cart],
+        cash: world.cash,
+        activeBuffs: { ...world.activeBuffs },
       })
     }
 
@@ -147,3 +188,4 @@ export default function GameLoop({ world }) {
 
   return null
 }
+

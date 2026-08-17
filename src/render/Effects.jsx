@@ -22,13 +22,15 @@ export function Balloons({ world }) {
       dummy.position.set(b.x, b.y, b.z)
       dummy.rotation.set(0, Math.atan2(b.vx, b.vz), 0)
       const stretch = 1 + Math.min(0.5, speed / 90)
-      dummy.scale.set(1, 1 / stretch, stretch)
+      const s = b.isMega ? 2.2 : 1.0
+      dummy.scale.set(s, s / stretch, s * stretch)
       dummy.updateMatrix()
       mesh.setMatrixAt(n++, dummy.matrix)
     }
     mesh.count = n
     mesh.instanceMatrix.needsUpdate = true
   })
+
 
   return (
     <instancedMesh ref={ref} args={[null, null, MAX_BALLOONS]} frustumCulled={false}>
@@ -205,3 +207,32 @@ export function SprayBeam({ world }) {
     </mesh>
   )
 }
+
+/** Render các vỏ chuối rơi trên mặt đường/sàn nhà */
+export function Bananas({ world }) {
+  const ref = useRef()
+  useFrame(() => {
+    const mesh = ref.current
+    if (!mesh) return
+    let n = 0
+    for (let i = 0; i < world.bananas.length; i++) {
+      const b = world.bananas[i]
+      if (!b.active) continue
+      dummy.position.set(b.x, b.y + 0.06, b.z)
+      dummy.rotation.set(0, b.rot || 0, 0)
+      dummy.scale.set(1, 1, 1)
+      dummy.updateMatrix()
+      mesh.setMatrixAt(n++, dummy.matrix)
+    }
+    mesh.count = n
+    mesh.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh ref={ref} args={[null, null, 24]} frustumCulled={false}>
+      <cylinderGeometry args={[0.08, 0.12, 0.5, 8]} />
+      <meshStandardMaterial color="#ffd166" roughness={0.3} />
+    </instancedMesh>
+  )
+}
+

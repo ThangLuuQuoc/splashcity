@@ -4,7 +4,7 @@ import { addHeat } from './heat.js'
 import { scarePed } from './pedestrians.js'
 import { playSplash } from '../audio.js'
 
-function spawnSplash(world, x, y, z) {
+function spawnSplash(world, x, y, z, isMega = false) {
   let slot = world.splashes.find((s) => !s.active)
   if (!slot) slot = world.splashes[0]
   slot.active = true
@@ -12,7 +12,7 @@ function spawnSplash(world, x, y, z) {
   slot.y = y
   slot.z = z
   slot.life = 0
-  slot.max = 0.55
+  slot.max = isMega ? 0.9 : 0.55
   playSplash()
 }
 
@@ -27,10 +27,11 @@ function pointInsideBuilding(world, x, y, z) {
 }
 
 /** Everything within the splash radius gets soaked and runs off laughing. */
-function applySplash(world, x, z, fromPlayer) {
+function applySplash(world, x, z, fromPlayer, isMega = false) {
   let heat = 0
   let score = 0
-  const r2 = ACTIONS.splashRadius * ACTIONS.splashRadius
+  const radius = isMega ? ACTIONS.splashRadius * 2.0 : ACTIONS.splashRadius
+  const r2 = radius * radius
 
   for (let i = 0; i < world.peds.length; i++) {
     const ped = world.peds[i]
@@ -40,12 +41,12 @@ function applySplash(world, x, z, fromPlayer) {
     if (dx * dx + dz * dz > r2) continue
     if (ped.soaked <= 0) {
       heat += HEAT.splashPed
-      score += SCORE.splashPed
+      score += isMega ? SCORE.splashPed * 2 : SCORE.splashPed
       world.stats.splashed++
     }
-    ped.soaked = 6
+    ped.soaked = isMega ? 10 : 6
     scarePed(ped, x, z)
-    ped.vy = Math.max(ped.vy, 3)
+    ped.vy = Math.max(ped.vy, isMega ? 6 : 3)
   }
 
   for (let i = 0; i < world.cars.length; i++) {
@@ -56,10 +57,10 @@ function applySplash(world, x, z, fromPlayer) {
     if (dx * dx + dz * dz > r2 + CAR.radius * CAR.radius) continue
     if (car.soaked <= 0) {
       heat += HEAT.splashCar
-      score += SCORE.splashCar
+      score += isMega ? SCORE.splashCar * 2 : SCORE.splashCar
       world.stats.splashed++
     }
-    car.soaked = 8
+    car.soaked = isMega ? 12 : 8
   }
 
   for (let i = 0; i < world.police.length; i++) {
@@ -70,10 +71,10 @@ function applySplash(world, x, z, fromPlayer) {
     if (dx * dx + dz * dz > r2 + CAR.radius * CAR.radius) continue
     if (cop.soaked <= 0) {
       heat += HEAT.splashCop
-      score += SCORE.splashCop
+      score += isMega ? SCORE.splashCop * 2 : SCORE.splashCop
       world.stats.splashed++
     }
-    cop.soaked = 8
+    cop.soaked = isMega ? 12 : 8
   }
 
   for (let i = 0; i < world.footCops.length; i++) {
@@ -84,10 +85,10 @@ function applySplash(world, x, z, fromPlayer) {
     if (dx * dx + dz * dz > r2) continue
     if (cop.soaked <= 0) {
       heat += HEAT.splashCop
-      score += SCORE.splashCop
+      score += isMega ? SCORE.splashCop * 2 : SCORE.splashCop
       world.stats.splashed++
     }
-    cop.soaked = 8
+    cop.soaked = isMega ? 12 : 8
     // A soaked cop stops to wipe their face, which is your chance to run.
     cop.vx *= 0.1
     cop.vz *= 0.1
@@ -95,6 +96,7 @@ function applySplash(world, x, z, fromPlayer) {
 
   if (fromPlayer) {
     world.score += score
+    if (isMega) world.camera.shake = Math.min(1, world.camera.shake + 0.45)
     if (heat > 0) addHeat(world, heat)
   }
 }
@@ -128,7 +130,7 @@ export function updateProjectiles(world, dt) {
       hy = b.y
       hz = b.z
     } else {
-      const r = ACTIONS.balloonRadius
+      const r = b.isMega ? ACTIONS.balloonRadius * 1.8 : ACTIONS.balloonRadius
       for (let j = 0; j < world.peds.length && !hit; j++) {
         const ped = world.peds[j]
         if (ped.indoors) continue
@@ -164,8 +166,8 @@ export function updateProjectiles(world, dt) {
     if (hit || b.life > 5) {
       b.active = false
       if (hit) {
-        spawnSplash(world, hx, hy + 0.2, hz)
-        applySplash(world, hx, hz, true)
+        spawnSplash(world, hx, hy + 0.2, hz, b.isMega)
+        applySplash(world, hx, hz, true, b.isMega)
       }
       continue
     }
@@ -182,3 +184,4 @@ export function updateProjectiles(world, dt) {
     if (s.life >= s.max) s.active = false
   }
 }
+

@@ -3,8 +3,9 @@ import { nearbyBoxes } from '../collision.js'
 import { isOnBlock } from '../city.js'
 import { addHeat } from './heat.js'
 import { input, keyDown } from './input.js'
-import { playThrow, playPickup } from '../audio.js'
+import { playThrow, playPickup, playBeep } from '../audio.js'
 import { findBoardableCar, dwellingStation } from './train.js'
+import { nearHelicopter, toggleHeliTour, tourTarget } from './helicopter.js'
 
 const STAMPS_PER_TAG = 6
 
@@ -23,6 +24,10 @@ function throwBalloon(world) {
 
   const inCar = p.mode === 'car'
   b.active = true
+  b.isMega = !!world.hasMegaBalloon
+  if (world.hasMegaBalloon) {
+    world.hasMegaBalloon = false
+  }
   b.x = p.x + dirX * 1.4
   b.y = (inCar ? 1.5 : 1.45) + p.y
   b.z = p.z + dirZ * 1.4
@@ -41,6 +46,7 @@ function throwBalloon(world) {
   world.throwCooldown = ACTIONS.throwCooldown
   playThrow()
 }
+
 
 /** Walk a ray forward from the player looking for a wall to tag. */
 function findSprayTarget(world) {
@@ -125,8 +131,57 @@ function updateRefill(world, dt) {
   world.refillProgress = 0
 }
 
+import { useInventoryItem } from './inventory.js'
+import { keyPressed, uiCaptured } from './input.js'
+
 export function updateActions(world, dt) {
   if (world.throwCooldown > 0) world.throwCooldown -= dt
+
+  // Toggle Phone
+  if (keyPressed('KeyP')) {
+    world.phoneOpen = !world.phoneOpen
+  }
+
+  // Mở / đóng bản đồ chọn khu vực để tự động chạy tới
+  if (keyPressed('KeyM')) {
+    world.mapOpen = !world.mapOpen
+  }
+
+  // Esc đóng overlay đang mở. Trình duyệt cũng dùng Esc để nhả pointer lock, nên
+  // trước đây người chơi phải bấm Esc chỉ để lấy lại con trỏ chuột; giờ con trỏ đã
+  // được nhả ngay khi overlay mở, Esc chuyển thành phím đóng overlay cho đúng phản xạ.
+  if (keyPressed('Escape') && uiCaptured(world)) {
+    world.phoneOpen = false
+    world.mapOpen = false
+  }
+
+  // Overlay đang mở thì các hành động trong game đều nghỉ - phím và chuột thuộc về
+  // giao diện. Chỉ các phím đóng/mở overlay ở trên là còn tác dụng.
+  if (uiCaptured(world)) {
+    world.spraying = false
+    world.sprayTarget = null
+    return
+  }
+
+  // X là công tắc "chế độ tự động" theo ngữ cảnh: đi bộ thì bật chạy dính, đang bay thì
+  // bật bay tự động ngắm cảnh. Chạy dính lúc bay vô nghĩa nên không có xung đột, và
+  // người chơi chỉ phải nhớ một phím. (Dùng X vì R đã là phím quay camera, cặp với Q.)
+  if (keyPressed('KeyX')) {
+    if (world.player.mode === 'heli') {
+      // Không đặt prompt ở đây: updatePrompt chạy sau trong cùng frame và sẽ ghi đè.
+      // Trạng thái tour được chính updatePrompt diễn đạt bên dưới.
+      toggleHeliTour(world)
+    } else {
+      world.autoRun = !world.autoRun
+    }
+    playBeep()
+  }
+
+  // Quick slot 1, 2, 3, 4 to use inventory items
+  if (keyPressed('Digit1') && world.inventory[0]) useInventoryItem(world, world.inventory[0].id)
+  if (keyPressed('Digit2') && world.inventory[1]) useInventoryItem(world, world.inventory[1].id)
+  if (keyPressed('Digit3') && world.inventory[2]) useInventoryItem(world, world.inventory[2].id)
+  if (keyPressed('Digit4') && world.inventory[3]) useInventoryItem(world, world.inventory[3].id)
 
   if (input.fire || keyDown('KeyB')) throwBalloon(world)
 
@@ -167,43 +222,71 @@ export function updateActions(world, dt) {
 /** Contextual hint shown at the bottom of the screen. */
 export function updatePrompt(world) {
   const p = world.player
-  // `kind` separates hints about the world ("a train is here, board it") from
-  // ones that merely list the controls. On a touchscreen the on-screen buttons
-  // are already labelled, so only the former are worth showing.
   const set = (text, kind) => {
     world.prompt = text
     world.promptKind = kind
+  }
+
+  // Nếu đang trong nội thất hoặc đã có prompt đặc biệt từ interior, giữ nguyên
+  if (world.interior !== 'none' || world.promptKind === 'interior' || world.promptKind === 'shopping' || world.promptKind === 'police') {
+    return
   }
 
   if (p.mode === 'train') {
     const train = world.trains[p.train]
     const station = train && dwellingStation(world, train)
     return station
-      ? set(`${station.name} — this is your stop`, 'hint')
-      : set('Riding the Skyline', 'hint')
+      ? set(`${station.name} — ga tàu dừng`, 'hint')
+      : set('Đang đi tàu trên cao Skyline', 'hint')
+  }
+
+  if (p.mode === 'heli') {
+    const target = tourTarget(world)
+    if (target) {
+      // Kind 'hint' để dòng này hiện cả trên tablet - Prompt() lọc bỏ 'controls' ở touch.
+      return set(
+        `🛩️ Bay tự động — đang ngắm ${target.icon} ${target.name} • chạm cần lái để tự lái lại`,
+        'hint',
+      )
+    }
+    const alt = Math.round(world.heli.y)
+    return set(
+      `🚁 Cao ${alt}m • W/S bay tiến lùi • A/D quay • Space lên • Shift xuống • X bay tự động • E hạ cánh`,
+      'controls',
+    )
   }
 
   if (p.mode === 'car') {
-    return set('E get out • Space handbrake • Click throw', 'controls')
+    return set('E xuống xe • Space phanh tay • Click ném bóng nước', 'controls')
+  }
+
+  if (nearHelicopter(world)) {
+    return set('[E] Lên trực thăng bay ngắm thành phố', 'hint')
   }
 
   if (findBoardableCar(world)) {
-    return set('Board the train', 'hint')
+    return set('Lên tàu điện [E]', 'hint')
   }
   for (let i = 0; i < world.cars.length; i++) {
     const c = world.cars[i]
     if (Math.hypot(c.x - p.x, c.z - p.z) < 4.2) {
-      return set('Get in the car', 'hint')
+      return set('Lên xe [E]', 'hint')
     }
   }
   for (let i = 0; i < world.fountains.length; i++) {
     const f = world.fountains[i]
     if (Math.hypot(f.x - p.x, f.z - p.z) < ACTIONS.refillRadius + 1) {
       return set(
-        world.ammo < ACTIONS.maxAmmo ? 'Refilling balloons...' : 'Balloons full!',
+        world.ammo < ACTIONS.maxAmmo ? 'Đang nạp bóng nước...' : 'Bóng nước đầy!',
         'hint',
       )
     }
   }
-  set('Click throw • F spray • Shift run', 'controls')
+  set(
+    world.autoRun
+      ? 'Click ném • F xịt sơn • P điện thoại • X tắt chạy • Shift đi chậm'
+      : 'Click ném • F xịt sơn • P điện thoại • X bật chế độ chạy • 1-4 dùng item',
+    'controls',
+  )
 }
+

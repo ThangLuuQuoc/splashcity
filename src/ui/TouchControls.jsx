@@ -115,6 +115,7 @@ export default function TouchControls({ world }) {
 
   const inCar = mode === 'car'
   const onTrain = mode === 'train'
+  const inHeli = mode === 'heli'
 
   return (
     <>
@@ -132,25 +133,58 @@ export default function TouchControls({ world }) {
           onChange={(held) => { input.fire = held }}
         />
         <TapButton
-          label={inCar || onTrain ? 'Get out' : 'Enter'}
-          icon={inCar || onTrain ? '🚪' : '🚗'}
+          label={inHeli ? 'Land' : inCar || onTrain ? 'Get out' : 'Interact'}
+          icon={inHeli ? '🛬' : inCar || onTrain ? '🚪' : '⚡'}
           onTap={() => virtualTap('KeyE')}
         />
+        <TapButton
+          label="Phone"
+          icon="📱"
+          onTap={() => virtualTap('KeyP')}
+        />
+        {/* Cùng một ô cho "chế độ tự động": đi bộ là chạy dính, đang bay là bay tự động
+            ngắm cảnh. Cả hai đều gửi phím X, nên số nút không đổi. */}
+        <TapButton
+          label={inHeli ? 'Auto' : 'Run'}
+          icon={inHeli ? '🛩️' : '🏃'}
+          disabled={inCar || onTrain}
+          onTap={() => virtualTap('KeyX')}
+        />
+        <TapButton
+          label="Map"
+          icon="🗺️"
+          onTap={() => virtualTap('KeyM')}
+        />
         <HoldButton
-          label={inCar ? 'Brake' : 'Jump'}
-          icon={inCar ? '🛑' : '⬆️'}
+          label={inHeli ? 'Up' : inCar ? 'Brake' : 'Jump'}
+          icon={inHeli ? '🔼' : inCar ? '🛑' : '⬆️'}
+          className={inHeli ? 'climb' : ''}
           onChange={(held) => virtualHold('Space', held)}
         />
-        <HoldButton
-          label="Spray"
-          icon="🎨"
-          disabled={inCar || onTrain}
-          onChange={(held) => virtualHold('KeyF', held)}
-        />
+        {/* Khi bay, ô "Spray" đổi thành nút hạ độ cao: xịt sơn lúc bay vô nghĩa, và giữ
+            nguyên số nút giúp dãy nút không xô lệch dưới ngón tay khi đổi phương tiện.
+            Thêm nút thứ 8 sẽ đẩy lưới 2 cột thành 4 hàng cao gần 400px - quá nửa chiều
+            cao một tablet nằm ngang. */}
+        {inHeli ? (
+          <HoldButton
+            label="Down"
+            icon="🔽"
+            className="climb"
+            onChange={(held) => virtualHold('ShiftLeft', held)}
+          />
+        ) : (
+          <HoldButton
+            label="Spray"
+            icon="🎨"
+            disabled={inCar || onTrain}
+            onChange={(held) => virtualHold('KeyF', held)}
+          />
+        )}
       </div>
     </>
   )
 }
+
 
 /** Stays active while a finger is on it. */
 function HoldButton({ label, icon, className = '', disabled, onChange }) {
@@ -202,13 +236,14 @@ function HoldButton({ label, icon, className = '', disabled, onChange }) {
 }
 
 /** Fires once per tap. */
-function TapButton({ label, icon, onTap }) {
+function TapButton({ label, icon, disabled, onTap }) {
   const ref = useRef(null)
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
     const press = (e) => {
+      if (disabled) return
       e.preventDefault()
       e.stopPropagation()
       el.classList.add('pressed')
@@ -223,10 +258,10 @@ function TapButton({ label, icon, onTap }) {
       el.removeEventListener('pointerup', release)
       el.removeEventListener('pointercancel', release)
     }
-  }, [onTap])
+  }, [onTap, disabled])
 
   return (
-    <button ref={ref} className="touch-btn">
+    <button ref={ref} className="touch-btn" disabled={disabled}>
       <span className="touch-btn-icon">{icon}</span>
       <span className="touch-btn-label">{label}</span>
     </button>

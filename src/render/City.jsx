@@ -118,11 +118,13 @@ function Fountain({ x, z }) {
 function PoliceStationSign({ city }) {
   const s = city.policeStation
   return (
-    <group position={[s.x, SLAB, s.z - 12]}>
+    <group position={[s.x, SLAB, s.z - 8]}>
+      {/* Biển hiệu POLICE STATION */}
       <mesh position={[0, 13.4, 8.2]}>
         <boxGeometry args={[16, 2.2, 0.4]} />
         <meshLambertMaterial color="#1d3557" />
       </mesh>
+      {/* Phù hiệu vàng */}
       <mesh position={[0, 13.4, 8.5]}>
         <boxGeometry args={[2.4, 1.2, 0.2]} />
         <meshBasicMaterial color="#ffd23f" />
@@ -133,9 +135,44 @@ function PoliceStationSign({ city }) {
           <meshBasicMaterial color="#e8f1ff" />
         </mesh>
       ))}
+      {/* Cửa kính ra vào đồn */}
+      <mesh position={[0, 1.8, 8.1]}>
+        <boxGeometry args={[4.5, 3.6, 0.2]} />
+        <meshStandardMaterial color="#457b9d" transparent opacity={0.6} />
+      </mesh>
     </group>
   )
 }
+
+function SupermarketSign({ city }) {
+  const s = city.supermarket
+  if (!s) return null
+  return (
+    <group position={[s.x, SLAB, s.z - 11]}>
+      {/* Biển hiệu SPLASH MART đỏ vàng rực rỡ */}
+      <mesh position={[0, 15.2, 11.2]}>
+        <boxGeometry args={[22, 3.2, 0.6]} />
+        <meshLambertMaterial color="#d62828" />
+      </mesh>
+      {/* Chữ SPLASH MART nổi bật màu vàng neon */}
+      <mesh position={[0, 15.2, 11.6]}>
+        <boxGeometry args={[18, 1.8, 0.2]} />
+        <meshBasicMaterial color="#ffb703" />
+      </mesh>
+      {/* Mái hiên sọc đỏ trắng phía trước */}
+      <mesh position={[0, 4.8, 11.5]} rotation={[0.2, 0, 0]}>
+        <boxGeometry args={[16, 0.3, 3.2]} />
+        <meshStandardMaterial color="#e63946" />
+      </mesh>
+      {/* Cửa kính tự động phía trước */}
+      <mesh position={[0, 2.0, 11.1]}>
+        <boxGeometry args={[6, 4, 0.2]} />
+        <meshStandardMaterial color="#00b4d8" transparent opacity={0.6} />
+      </mesh>
+    </group>
+  )
+}
+
 
 export default function City({ world }) {
   const city = world.city
@@ -264,6 +301,8 @@ export default function City({ world }) {
 
       {city.fountains.map((f, i) => <Fountain key={i} x={f.x} z={f.z} />)}
       <PoliceStationSign city={city} />
+      <SupermarketSign city={city} />
+
 
       {/* boundary hedge */}
       {city.walls.map((w, i) => (

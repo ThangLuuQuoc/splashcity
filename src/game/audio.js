@@ -200,3 +200,44 @@ export function updateSiren(intensity) {
   siren.gain.gain.setTargetAtTime(0.06 * intensity, c.currentTime, 0.15)
   siren.lfo.frequency.setTargetAtTime(1.3 + intensity * 1.2, c.currentTime, 0.2)
 }
+
+export function playBeep() {
+  blip({ type: 'sine', freq: 1760, to: 1760, dur: 0.08, gain: 0.25 })
+}
+
+export function playCashRegister() {
+  const c = ensure()
+  if (!c || muted) return
+  blip({ type: 'triangle', freq: 987, to: 987, dur: 0.12, gain: 0.25 })
+  setTimeout(() => {
+    blip({ type: 'triangle', freq: 1318, to: 1318, dur: 0.2, gain: 0.3 })
+  }, 100)
+}
+
+export function playBananaSlip() {
+  const c = ensure()
+  if (!c || muted) return
+  blip({ type: 'sawtooth', freq: 600, to: 120, dur: 0.35, gain: 0.3 })
+}
+
+export function playAlarm() {
+  const c = ensure()
+  if (!c || muted) return
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      blip({ type: 'square', freq: 880, to: 660, dur: 0.15, gain: 0.25 })
+    }, i * 200)
+  }
+}
+
+export function playItemUse() {
+  blip({ type: 'sine', freq: 523, to: 1046, dur: 0.15, gain: 0.25 })
+}
+
+export function playFruitThud() {
+  const c = ensure()
+  if (!c || muted) return
+  blip({ type: 'triangle', freq: 220, to: 70, dur: 0.12, gain: 0.45 })
+}
+
+

@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { WEATHER_TYPES, formatClock } from '../game/weather.js'
 import { cycleWeather, skipTimePhase } from '../game/systems/weather.js'
+import { useGame } from '../game/store.js'
+import { setMuted } from '../game/audio.js'
 
-// Reads straight from the mutable world on its own interval rather than through
-// the store - the clock ticks constantly and has no business re-rendering the
-// rest of the HUD four times a second.
 export default function WeatherWidget({ world }) {
   const [state, setState] = useState({ clock: '', icon: '', label: '' })
   const last = useRef('')
+
+  const muted = useGame((s) => s.muted)
+  const toggleMute = useGame((s) => s.toggleMute)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -16,8 +18,6 @@ export default function WeatherWidget({ world }) {
       const showing = w.blend > 0.5 ? w.target : w.current
       const type = WEATHER_TYPES[showing]
       const clock = formatClock(world.timeOfDay)
-      // "Sunny" at half past ten in the evening reads as a bug - but so does
-      // "night" during golden hour, so only flip once it is properly dark.
       const dark = w.night > 0.85
       const icon = dark && showing === 'clear' ? '🌙' : type.icon
       const label = dark && showing === 'clear' ? 'Clear night' : type.label
@@ -31,17 +31,33 @@ export default function WeatherWidget({ world }) {
 
   return (
     <div className="hud-panel hud-weather">
+      {/* Nút Mute tinh gọn dạng icon chip cùng 1 dòng */}
+      <button
+        className={`weather-chip mute-chip ${muted ? 'is-muted' : ''}`}
+        title={muted ? 'Bật âm thanh (Sound On)' : 'Tắt âm thanh (Mute)'}
+        onClick={(e) => {
+          e.currentTarget.blur()
+          setMuted(!muted)
+          toggleMute()
+        }}
+      >
+        <span className="weather-icon">{muted ? '🔇' : '🔊'}</span>
+      </button>
+
+      {/* Chip Thời tiết */}
       <button
         className="weather-chip"
-        title="Change the weather (C)"
+        title="Đổi thời tiết (C)"
         onClick={(e) => { e.currentTarget.blur(); cycleWeather(world) }}
       >
         <span className="weather-icon">{state.icon}</span>
         <span className="weather-label">{state.label}</span>
       </button>
+
+      {/* Chip Đồng hồ */}
       <button
         className="weather-chip clock"
-        title="Skip to the next time of day (N)"
+        title="Chuyển thời gian Ngày / Đêm (N)"
         onClick={(e) => { e.currentTarget.blur(); skipTimePhase(world) }}
       >
         {state.clock}

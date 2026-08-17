@@ -17,8 +17,9 @@ export default function Player({ world }) {
     if (!g) return
 
     // Hidden in a car, but visible riding the train - you can see yourself
-    // through the carriage windows and the see-through roof above you.
-    const visible = p.mode !== 'car'
+    // through the carriage windows and the see-through roof above you. Trực thăng
+    // cũng ẩn: người chơi ngồi trong khoang kín, hiện ra chỉ lòi vào giữa thân máy.
+    const visible = p.mode !== 'car' && p.mode !== 'heli'
     g.visible = visible
     if (!visible) return
 

@@ -18,19 +18,25 @@ export const input = {
   touchActive: false,
 }
 
-const pressed = new Set()
+const justPressedKeys = new Set()
+
+/**
+ * True khi đang có overlay giao diện mở (điện thoại, bản đồ). Lúc đó gameplay phải
+ * nhường chuột và bàn phím lại cho giao diện: không khoá con trỏ, không đi lại,
+ * không quay camera - nếu không thì người chơi phải bấm Esc mới bấm được vào overlay,
+ * và nhân vật vẫn lẳng lặng chạy phía sau.
+ */
+export function uiCaptured(world) {
+  return !!(world.phoneOpen || world.mapOpen)
+}
 
 export function keyDown(code) {
   return input.keys.has(code)
 }
 
-/** True once per physical key press. */
+/** True during the frame the key was physically or virtually pressed. */
 export function keyPressed(code) {
-  if (input.keys.has(code) && !pressed.has(code)) {
-    pressed.add(code)
-    return true
-  }
-  return false
+  return justPressedKeys.has(code)
 }
 
 // --- movement axes -------------------------------------------------------
@@ -54,8 +60,12 @@ export function axisRight() {
 // no gameplay system needs to know whether a finger or a key produced them.
 
 export function virtualHold(code, held) {
-  if (held) input.keys.add(code)
-  else input.keys.delete(code)
+  if (held) {
+    if (!input.keys.has(code)) justPressedKeys.add(code)
+    input.keys.add(code)
+  } else {
+    input.keys.delete(code)
+  }
 }
 
 /**
@@ -64,6 +74,7 @@ export function virtualHold(code, held) {
  * the edge-triggered keyPressed().
  */
 export function virtualTap(code, ms = 120) {
+  if (!input.keys.has(code)) justPressedKeys.add(code)
   input.keys.add(code)
   setTimeout(() => input.keys.delete(code), ms)
 }
@@ -72,26 +83,31 @@ export function endFrame() {
   input.mouseDX = 0
   input.mouseDY = 0
   input.firePressed = false
-  for (const code of pressed) {
-    if (!input.keys.has(code)) pressed.delete(code)
-  }
+  justPressedKeys.clear()
 }
 
 export function attachInput() {
   const onKeyDown = (e) => {
     if (e.repeat) return
+    if (!input.keys.has(e.code)) {
+      justPressedKeys.add(e.code)
+    }
     input.keys.add(e.code)
     // Stop the page scrolling / browser quick-find getting in the way.
-    if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'KeyE', 'KeyF'].includes(e.code)) {
+    if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'KeyE', 'KeyF', 'KeyP'].includes(e.code)) {
       e.preventDefault()
     }
   }
-  const onKeyUp = (e) => input.keys.delete(e.code)
+  const onKeyUp = (e) => {
+    input.keys.delete(e.code)
+  }
   const onBlur = () => {
     input.keys.clear()
+    justPressedKeys.clear()
     input.fire = false
     input.dragging = false
   }
+
 
   // Only the 3D view arms the throw - clicking HUD buttons should not fire.
   const overCanvas = (e) => input.locked || e.target?.tagName === 'CANVAS'

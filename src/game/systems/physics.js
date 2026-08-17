@@ -1,7 +1,8 @@
 import { CAR, HEAT, SCORE } from '../config.js'
 import { bumpVehicles } from './vehicle.js'
 import { addHeat } from './heat.js'
-import { playBump } from '../audio.js'
+import { playBump, playBananaSlip } from '../audio.js'
+
 
 const PROP_RADIUS = 0.6
 
@@ -100,3 +101,76 @@ export function updateProps(world, dt) {
     }
   }
 }
+
+export function resolveBananas(world, dt) {
+  const list = collectVehicles(world, vehicles)
+
+  for (const b of world.bananas) {
+    if (!b.active) continue
+
+    // Chỉ tác động khi ở cùng độ cao y
+    // Kiểm tra xe cán trúng vỏ chuối
+    for (let v = 0; v < list.length; v++) {
+      const car = list[v]
+      if (Math.abs(b.y - car.y) > 1.8) continue
+      const dx = b.x - car.x
+      const dz = b.z - car.z
+      const dist = Math.hypot(dx, dz)
+      if (dist < CAR.radius + 0.5) {
+        b.active = false
+        car.heading += (Math.random() - 0.5) * 4.0
+        car.speed *= 0.2
+        car.steer = (Math.random() - 0.5) * 8.0
+        world.score += 150
+        world.camera.shake = 0.3
+        playBananaSlip()
+        break
+      }
+    }
+
+    // Kiểm tra người đi bộ đạp trúng vỏ chuối
+    if (!b.active) continue
+    for (const ped of world.peds) {
+      if (Math.abs(b.y - ped.y) > 1.8) continue
+      const dist = Math.hypot(b.x - ped.x, b.z - ped.z)
+      if (dist < 1.2) {
+        b.active = false
+        ped.state = 'flee'
+        ped.fleeTimer = 4.0
+        ped.heading += Math.PI
+        world.score += 75
+        playBananaSlip()
+        break
+      }
+    }
+  }
+
+  // Xử lý vệt trơn trượt Kem Đánh Răng P/S Dâu
+  if (world.toothpastePatches && world.toothpastePatches.length > 0) {
+    const p = world.player
+    for (let i = world.toothpastePatches.length - 1; i >= 0; i--) {
+      const patch = world.toothpastePatches[i]
+      patch.life -= dt
+      if (patch.life <= 0) {
+        world.toothpastePatches.splice(i, 1)
+        continue
+      }
+      // Người chơi bước vào vệt dâu
+      if (Math.abs(p.y - patch.y) < 1.5 && Math.hypot(p.x - patch.x, p.z - patch.z) < patch.radius) {
+        p.vx *= 1.05
+        p.vz *= 1.05
+      }
+      // NPC bước vào vệt dâu
+      for (const ped of world.peds) {
+        if (Math.abs(ped.y - patch.y) < 1.5 && Math.hypot(ped.x - patch.x, ped.z - patch.z) < patch.radius) {
+          ped.vx = (Math.random() - 0.5) * 6
+          ped.vz = (Math.random() - 0.5) * 6
+          ped.state = 'flee'
+          ped.fleeTimer = 2.0
+        }
+      }
+    }
+  }
+}
+
+

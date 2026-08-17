@@ -17,9 +17,26 @@ export const useGame = create((set) => ({
   muted: false,
   touch: false, // on-screen controls are showing
 
+  // Interior, Phone & Shopping state
+  interior: 'none',
+  phoneOpen: false,
+  autoRun: false,
+  mapOpen: false,
+  travelName: '',
+  travelIcon: '',
+  travelling: false,
+  travelMessage: '',
+  setMapOpen: (mapOpen) => set({ mapOpen }),
+  inventory: [],
+  cart: [],
+  cash: 500000,
+  activeBuffs: { speedBoost: 1, timer: 0 },
+
   setTouch: (touch) => set((s) => (s.touch === touch ? s : { touch })),
   setPhase: (phase) => set({ phase }),
   setBusted: (busted) => set({ busted }),
+  setPhoneOpen: (phoneOpen) => set({ phoneOpen }),
   toggleMute: () => set((s) => ({ muted: !s.muted })),
   sync: (patch) => set(patch),
 }))
+

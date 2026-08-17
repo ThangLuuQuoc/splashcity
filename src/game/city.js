@@ -151,8 +151,12 @@ export function generateCity() {
 
   // Reserve a few themed blocks.
   const policeBlock = { i: 1, j: B - 2 }
+  const supermarketBlock = { i: B - 2, j: 1 }
   const parkBlocks = [{ i: 4, j: 2 }, { i: 2, j: 5 }]
   const plazaBlock = { i: 3, j: 3 }
+  // Sân đỗ trực thăng ở một góc thành phố - phải bay một đoạn mới tới được trung tâm,
+  // nên chuyến bay có cảm giác đi khám phá thật.
+  const helipadBlock = { i: 1, j: 1 }
 
   const isAt = (a, i, j) => a.i === i && a.j === j
   const stationLots = stationBlocks()
@@ -165,8 +169,10 @@ export function generateCity() {
       // Station lots come first: their ramps need the block left clear.
       if (isStationLot(i, j)) type = 'station'
       else if (isAt(policeBlock, i, j)) type = 'police'
+      else if (isAt(supermarketBlock, i, j)) type = 'supermarket'
       else if (parkBlocks.some((p) => isAt(p, i, j))) type = 'park'
       else if (isAt(plazaBlock, i, j)) type = 'plaza'
+      else if (isAt(helipadBlock, i, j)) type = 'helipad'
 
       const block = { i, j, cx, cz, type, half: BS / 2 }
       blocks.push(block)
@@ -198,6 +204,22 @@ export function generateCity() {
         })
         staticBoxes.push({ minX: cx - w / 2, maxX: cx + w / 2, minZ: z - d / 2, maxZ: z + d / 2, height: 12 })
         fountains.push({ x: cx + 15, z: cz + 14 })
+      } else if (type === 'helipad') {
+        // Sân đỗ để trống hoàn toàn ở giữa: người chơi phải đi bộ tới được trực thăng,
+        // và hạ cánh về đây cũng không được có gì chắn.
+        addProps(rng, block, props, trees)
+        fountains.push({ x: cx - 15, z: cz + 15 })
+      } else if (type === 'supermarket') {
+        // Tòa nhà siêu thị Splash Mart 2 tầng bề thế
+        const w = 32, d = 22
+        const z = cz - 6
+        buildings.push({
+          x: cx, z, w, d, h: 14,
+          color: '#d62828', roof: '#222222', windowRows: 2, supermarket: true,
+        })
+        staticBoxes.push({ minX: cx - w / 2, maxX: cx + w / 2, minZ: z - d / 2, maxZ: z + d / 2, height: 14 })
+        addProps(rng, block, props, trees)
+        fountains.push({ x: cx + 14, z: cz + 14 })
       }
     }
   }
@@ -244,6 +266,7 @@ export function generateCity() {
   }
 
   const station = blockCenter(policeBlock.i, policeBlock.j)
+  const superM = blockCenter(supermarketBlock.i, supermarketBlock.j)
   const plaza = blockCenter(plazaBlock.i, plazaBlock.j)
 
   return {
@@ -257,8 +280,19 @@ export function generateCity() {
     fountains,
     nodes: buildRoadGraph(),
     bounds: { min: -edge, max: edge },
-    policeStation: { x: station.cx, z: station.cz + 12 },
+    policeStation: { x: station.cx, z: station.cz },
+    policeDoor: { x: station.cx, z: station.cz },
+    supermarket: { x: superM.cx, z: superM.cz + 5 },
+    supermarketDoor: { x: superM.cx, z: superM.cz + 5 },
     plaza: { x: plaza.cx, z: plaza.cz },
+    helipad: (() => {
+      const c = blockCenter(helipadBlock.i, helipadBlock.j)
+      return { x: c.cx, z: c.cz }
+    })(),
+    parks: parkBlocks.map((p) => {
+      const c = blockCenter(p.i, p.j)
+      return { x: c.cx, z: c.cz }
+    }),
     playerSpawn: { x: plaza.cx, z: plaza.cz + BS / 2 + RW / 2 },
   }
 }

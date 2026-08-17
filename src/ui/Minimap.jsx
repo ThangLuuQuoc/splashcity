@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { CITY } from '../game/config.js'
 import { roadCenter } from '../game/city.js'
+import { landmarkPosition } from '../game/landmarks.js'
 
 const SIZE = 168
 const VIEW = 220 // world units visible across the minimap
@@ -89,10 +90,97 @@ export default function Minimap({ world }) {
         ctx.fill()
       }
 
-      // Police station.
-      const st = world.city.policeStation
-      ctx.fillStyle = '#1d3557'
-      ctx.fillRect(toX(st.x) - 5, toY(st.z) - 5, 10, 10)
+      // Đường đang tự động chạy tới, vẽ dưới các mốc.
+      const travel = world.travel
+      if (travel && travel.active && travel.path.length) {
+        ctx.strokeStyle = 'rgba(6, 214, 160, 0.9)'
+        ctx.lineWidth = 3
+        ctx.setLineDash([6, 4])
+        ctx.beginPath()
+        ctx.moveTo(SIZE / 2, SIZE / 2)
+        for (let i = travel.index; i < travel.path.length; i++) {
+          const wp = travel.path[i]
+          ctx.lineTo(toX(wp.x), toY(wp.z))
+        }
+        ctx.stroke()
+        ctx.setLineDash([])
+      }
+
+      // Các khu vực đặc biệt. Mốc nằm ngoài tầm nhìn được kẹp vào viền minimap kèm
+      // mũi chỉ hướng - nếu không thì đồn cảnh sát và siêu thị gần như vô hình, vì
+      // minimap chỉ thấy 220m trong khi thành phố rộng gần 400m.
+      const radius = SIZE / 2 - 1
+      const pulse = 0.5 + 0.5 * Math.sin(world.time * 3)
+      for (const lm of world.landmarks || []) {
+        const at = landmarkPosition(world, lm)
+        let mx = toX(at.x)
+        let my = toY(at.z)
+        const dx = mx - SIZE / 2
+        const dy = my - SIZE / 2
+        const dist = Math.hypot(dx, dy)
+        const offscreen = dist > radius - 10
+
+        if (offscreen) {
+          const k = (radius - 10) / dist
+          mx = SIZE / 2 + dx * k
+          my = SIZE / 2 + dy * k
+        }
+
+        // Vòng nhấp nháy cho các khu vực vào được, để chúng nổi hơn mốc thường.
+        if (lm.kind === 'interior') {
+          ctx.strokeStyle = `rgba(255, 209, 102, ${0.35 + 0.5 * pulse})`
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.arc(mx, my, 8 + pulse * 3, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+
+        ctx.fillStyle = lm.color
+        ctx.strokeStyle = offscreen ? 'rgba(255,255,255,0.55)' : '#12161d'
+        ctx.lineWidth = 1.5
+        ctx.beginPath()
+        ctx.arc(mx, my, offscreen ? 5 : 7, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.stroke()
+
+        if (!offscreen) {
+          ctx.font = '9px sans-serif'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText(lm.icon, mx, my + 0.5)
+        }
+      }
+
+      // Đích đang chạy tới: vòng tròn xanh nổi bật.
+      if (travel && travel.active) {
+        ctx.strokeStyle = '#06d6a0'
+        ctx.lineWidth = 2.5
+        ctx.beginPath()
+        ctx.arc(toX(travel.destX), toY(travel.destZ), 10 + pulse * 3, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+
+
+      // Trực thăng: cánh quạt quay để phân biệt với mốc tĩnh, và khi người chơi đang
+      // bay thì vòng ngoài cho biết bán kính tầm nhìn từ trên cao.
+      const heli = world.heli
+      if (heli) {
+        const hx = toX(heli.x)
+        const hy = toY(heli.z)
+        ctx.strokeStyle = '#ef233c'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.arc(hx, hy, 5, 0, Math.PI * 2)
+        ctx.stroke()
+        const blade = world.time * 8
+        ctx.beginPath()
+        for (let i = 0; i < 2; i++) {
+          const a = blade + (i * Math.PI) / 2
+          ctx.moveTo(hx - Math.cos(a) * 6, hy - Math.sin(a) * 6)
+          ctx.lineTo(hx + Math.cos(a) * 6, hy + Math.sin(a) * 6)
+        }
+        ctx.stroke()
+      }
 
       // Cops.
       const flash = Math.floor(world.time * 6) % 2 === 0

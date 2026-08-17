@@ -5,6 +5,9 @@ import { makeRng } from './rng.js'
 import { createTrains } from './systems/train.js'
 import { createWeather } from './systems/weather.js'
 import { createDisaster } from './systems/disasters.js'
+import { createTravel } from './systems/navigation.js'
+import { createHelicopter } from './systems/helicopter.js'
+import { buildLandmarks } from './landmarks.js'
 import { TIME } from './config.js'
 
 // The whole simulation lives in this one mutable object. Nothing here is React
@@ -15,6 +18,7 @@ export const MAX_POLICE = 8
 export const MAX_FOOT_COPS = 8
 export const MAX_BALLOONS = 40
 export const MAX_SPLASHES = 28
+export const MAX_BANANAS = 24
 
 function laneOffset(dirX, dirZ) {
   // Drive on the right: offset perpendicular to travel direction.
@@ -148,6 +152,19 @@ export function createWorld() {
     weather: createWeather(),
     disaster: createDisaster(),
     phase: 'menu', // menu | playing | busted
+    interior: 'none', // none | police_station | supermarket
+    previousOutdoorPos: { x: city.playerSpawn.x, y: 0, z: city.playerSpawn.z, heading: 0 },
+
+    // Chế độ chạy dính (bật/tắt bằng R hoặc nút 🏃). Bàn phím luôn đẩy cần ở mức
+    // tối đa nên không tự phân biệt được đi và chạy như thumbstick, vì vậy cần một
+    // công tắc thay cho việc giữ Shift suốt cả ván. Đây là tuỳ chọn điều khiển của
+    // người chơi, không phải trạng thái ván đấu -> không reset khi respawn.
+    autoRun: false,
+
+    heli: createHelicopter(city), // trực thăng đỗ ở sân bay trực thăng
+    landmarks: buildLandmarks(city), // khu vực đặc biệt: minimap + bản đồ chọn điểm đến
+    travel: createTravel(), // trạng thái tự động chạy tới điểm đã chọn
+    mapOpen: false,
 
     player: {
       x: city.playerSpawn.x, z: city.playerSpawn.z, y: 0,
@@ -188,14 +205,28 @@ export function createWorld() {
     })),
 
     balloons: pool(MAX_BALLOONS, () => ({
-      active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, life: 0,
+      active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, life: 0, isMega: false,
     })),
 
     splashes: pool(MAX_SPLASHES, () => ({
       active: false, x: 0, y: 0, z: 0, life: 0, max: 0.6,
     })),
 
+    bananas: pool(MAX_BANANAS, () => ({
+      active: false, x: 0, y: 0, z: 0, rot: 0, life: 0,
+    })),
+
     decals: [],
+    toothpastePatches: [], // [{ x, y, z, radius, life }]
+
+    // Inventory & Shopping State
+    inventory: [], // [{ id, count, name, icon, ... }]
+    cart: [],      // [{ id, count, name, price, icon }]
+    cash: 500000,  // 500.000 VNĐ SplashPay
+    phoneOpen: false,
+    hasMegaBalloon: false,
+    secretBalloonFound: false,
+    activeBuffs: { speedBoost: 1, timer: 0 },
 
     heat: 0,
     stars: 0,
@@ -204,6 +235,7 @@ export function createWorld() {
     lastMischief: 0,
     outOfSight: 0,
     copSpawnTimer: 0,
+
     throwCooldown: 0,
     sprayTimer: 0,
     spraying: false,
@@ -220,6 +252,10 @@ export function createWorld() {
 /** Put the player back at the police station after a bust (or on a fresh start). */
 export function respawnPlayer(world, atStation = true) {
   const p = world.player
+  world.interior = 'none'
+  // Bị bắt / hồi sinh thì dừng tự động di chuyển: đường đã tính không còn đúng với
+  // chỗ vừa xuất hiện.
+  world.travel = createTravel()
   const spot = atStation ? world.city.policeStation : world.city.playerSpawn
   p.x = spot.x
   p.z = spot.z + (atStation ? 14 : 0)
@@ -247,9 +283,18 @@ export function resetGame(world) {
   world.score = 0
   world.decals.length = 0
   world.time = 0
+  world.interior = 'none'
+  world.inventory.length = 0
+  world.cart.length = 0
+  world.phoneOpen = false
+  world.mapOpen = false
+  world.heli = createHelicopter(world.city) // trực thăng về lại sân đỗ
+  world.cash = 500000
+  world.activeBuffs = { speedBoost: 1, timer: 0 }
   world.stats = { splashed: 0, bumped: 0, tagged: 0, busted: 0 }
   for (const b of world.balloons) b.active = false
   for (const s of world.splashes) s.active = false
+  for (const bn of world.bananas) bn.active = false
   for (const c of world.cars) {
     if (c.driver === 'player') c.driver = 'none'
     c.soaked = 0
@@ -261,3 +306,4 @@ export function resetGame(world) {
   }
   respawnPlayer(world, false)
 }
+

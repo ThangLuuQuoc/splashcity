@@ -4,12 +4,13 @@ import { Canvas } from '@react-three/fiber'
 import { createWorld, resetGame } from './game/world.js'
 import { useGame } from './game/store.js'
 import GameLoop from './game/GameLoop.jsx'
-import { attachInput, requestLock, input } from './game/systems/input.js'
+import { attachInput, requestLock, releaseLock, input, uiCaptured } from './game/systems/input.js'
 import { unlockAudio, updateSiren } from './game/audio.js'
 import { PALETTE } from './game/config.js'
 
 import City from './render/City.jsx'
 import Cars from './render/Cars.jsx'
+import Helicopter from './render/Helicopter.jsx'
 import Pedestrians from './render/Pedestrians.jsx'
 import Player from './render/Player.jsx'
 import Props from './render/Props.jsx'
@@ -18,42 +19,66 @@ import Trains from './render/Trains.jsx'
 import Atmosphere from './render/Atmosphere.jsx'
 import Ocean from './render/Ocean.jsx'
 import Disasters from './render/Disasters.jsx'
+import SupermarketInterior from './render/SupermarketInterior.jsx'
+import PoliceInterior from './render/PoliceInterior.jsx'
 import { Precipitation, WindDebris } from './render/Precipitation.jsx'
-import { Balloons, Splashes, PaintDecals, BlobShadows, SprayBeam } from './render/Effects.jsx'
+import { Balloons, Splashes, PaintDecals, BlobShadows, SprayBeam, Bananas } from './render/Effects.jsx'
 
 import HUD from './ui/HUD.jsx'
 import StartScreen from './ui/StartScreen.jsx'
 import BustedOverlay from './ui/BustedOverlay.jsx'
 import TouchControls from './ui/TouchControls.jsx'
+import PhoneOverlay from './ui/PhoneOverlay.jsx'
+import MapOverlay from './ui/MapOverlay.jsx'
 import { isTouchDevice, maxPixelRatio } from './game/device.js'
 import './ui/ui.css'
 
 function Scene({ world }) {
+  const interior = useGame((s) => s.interior)
+  const isOutdoor = interior === 'none'
+
   return (
     <>
-      <Atmosphere world={world} />
-      <Ocean world={world} />
+      {isOutdoor ? (
+        <>
+          <Atmosphere world={world} />
+          <Ocean world={world} />
+          <City world={world} />
+          <Props world={world} />
+          <Rail world={world} />
+          <Cars world={world} />
+          <Helicopter world={world} />
+          <Pedestrians world={world} />
+          <Trains world={world} />
+          <Precipitation world={world} />
+          <WindDebris world={world} />
+          <Disasters world={world} />
+        </>
+      ) : (
+        <>
+          {/* Chỉ mount đúng toà nhà người chơi đang ở: mọi hook trong component
+              interior đều chạy trước câu return null, nên nếu mount cả hai thì vào
+              đồn cảnh sát vẫn phải dựng toàn bộ tài nguyên của siêu thị. */}
+          <color attach="background" args={['#1a1d24']} />
+          {interior === 'supermarket' && <SupermarketInterior world={world} />}
+          {interior === 'police_station' && <PoliceInterior world={world} />}
+        </>
+      )}
 
-      <City world={world} />
       <PaintDecals world={world} />
       <BlobShadows world={world} />
-      <Props world={world} />
-      <Rail world={world} />
-      <Cars world={world} />
-      <Pedestrians world={world} />
       <Player world={world} />
-      <Trains world={world} />
       <Balloons world={world} />
       <Splashes world={world} />
+      <Bananas world={world} />
       <SprayBeam world={world} />
-      <Precipitation world={world} />
-      <WindDebris world={world} />
-      <Disasters world={world} />
 
       <GameLoop world={world} />
     </>
   )
 }
+
+
 
 export default function App() {
   const world = useMemo(() => createWorld(), [])
@@ -61,6 +86,8 @@ export default function App() {
   const setPhase = useGame((s) => s.setPhase)
   const touch = useGame((s) => s.touch)
   const setTouch = useGame((s) => s.setTouch)
+  const phoneOpen = useGame((s) => s.phoneOpen)
+  const mapOpen = useGame((s) => s.mapOpen)
   const canvasRef = useRef(null)
 
   // Show the on-screen controls on a tablet immediately, and on a hybrid
@@ -79,6 +106,12 @@ export default function App() {
   }, [world])
 
   useEffect(() => attachInput(), [])
+
+  // Overlay mở ra là nhả con trỏ chuột ngay. Không có bước này thì con trỏ vẫn bị
+  // pointer lock giữ và người chơi phải bấm Esc mới bấm/chọn được trong overlay.
+  useEffect(() => {
+    if (phoneOpen || mapOpen) releaseLock()
+  }, [phoneOpen, mapOpen])
 
   const start = () => {
     unlockAudio()
@@ -112,8 +145,11 @@ export default function App() {
           window.three = { gl, scene, camera }
         }}
         onPointerDown={() => {
-          // Pointer lock is meaningless on a touchscreen.
-          if (world.phase === 'playing' && !touch) requestLock(canvasRef.current)
+          // Pointer lock is meaningless on a touchscreen, and must not be grabbed
+          // back while an overlay needs the cursor.
+          if (world.phase === 'playing' && !touch && !uiCaptured(world)) {
+            requestLock(canvasRef.current)
+          }
         }}
       >
         <Scene world={world} />
@@ -121,8 +157,11 @@ export default function App() {
 
       <HUD world={world} />
       <BustedOverlay />
+      <PhoneOverlay world={world} />
+      <MapOverlay world={world} />
       {touch && phase === 'playing' && <TouchControls world={world} />}
       {phase === 'menu' && <StartScreen onStart={start} />}
     </>
   )
 }
+

@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react'
 import { useGame } from '../game/store.js'
 import { ACTIONS, HEAT } from '../game/config.js'
 import { setMuted } from '../game/audio.js'
+import { useInventoryItem } from '../game/systems/inventory.js'
+import { cancelTravel } from '../game/systems/navigation.js'
 import Minimap from './Minimap.jsx'
 import WeatherWidget from './WeatherWidget.jsx'
 import DisasterBanner from './DisasterBanner.jsx'
@@ -52,30 +55,176 @@ function Ammo() {
   )
 }
 
+function BuffBadge() {
+  const activeBuffs = useGame((s) => s.activeBuffs)
+  if (!activeBuffs || activeBuffs.timer <= 0) return null
+  return (
+    <div className="hud-panel hud-buff">
+      <span className="buff-icon">⚡</span>
+      <span className="buff-name">{activeBuffs.name || 'Sugar Rush'}</span>
+      <span className="buff-time">{Math.ceil(activeBuffs.timer)}s</span>
+    </div>
+  )
+}
+
+/**
+ * Chỉ báo chế độ chạy. Bấm được luôn - trên PC là nút phụ cho phím R, trên tablet
+ * là cách chạy liên tục mà không phải giữ cần analog ở sát vành.
+ */
+function RunModeBadge({ world }) {
+  const autoRun = useGame((s) => s.autoRun)
+  const touch = useGame((s) => s.touch)
+  return (
+    <button
+      className={`hud-panel hud-runmode ${autoRun ? 'on' : ''}`}
+      onClick={() => { if (world) world.autoRun = !world.autoRun }}
+      title={autoRun ? 'Đang bật chế độ chạy - giữ Shift để đi chậm [X]' : 'Bật chế độ chạy liên tục [X]'}
+    >
+      <span className="run-icon">{autoRun ? '🏃' : '🚶'}</span>
+      <span className="run-label">{autoRun ? 'CHẠY' : 'ĐI BỘ'}</span>
+      {!touch && <span className="run-key">[X]</span>}
+    </button>
+  )
+}
+
+function QuickInventory({ world }) {
+  const inventory = useGame((s) => s.inventory) || []
+  if (inventory.length === 0) return null
+  return (
+    <div className="hud-panel hud-inventory">
+      <div className="inv-title">🎒 Túi đồ:</div>
+      <div className="inv-slots">
+        {inventory.slice(0, 4).map((item, idx) => (
+          <button
+            key={idx}
+            className="inv-slot-btn"
+            onClick={() => world && useInventoryItem(world, item.id)}
+            title={`${item.name} (${item.desc})`}
+          >
+            <span className="slot-key">[{idx + 1}]</span>
+            <span className="slot-icon">{item.icon}</span>
+            <span className="slot-count">x{item.count}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PhoneButton({ world }) {
+  const phoneOpen = useGame((s) => s.phoneOpen)
+  const setPhoneOpen = useGame((s) => s.setPhoneOpen)
+  const cart = useGame((s) => s.cart) || []
+  return (
+    <button
+      className={`phone-toggle-btn ${cart.length > 0 ? 'has-cart' : ''}`}
+      onClick={() => {
+        const next = !phoneOpen
+        if (world) world.phoneOpen = next
+        setPhoneOpen(next)
+      }}
+      title="Mở Smartphone / Quét mã QR thanh toán [P]"
+    >
+      <span>📱 Phone</span>
+      {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
+    </button>
+  )
+}
+
+/**
+ * Đồng hồ cao độ khi đang bay.
+ *
+ * Cần thiết nhất trên tablet: dòng gợi ý điều khiển mang promptKind 'controls', mà
+ * Prompt() lọc bỏ 'controls' trên touch - nên nếu không có chip này thì người chơi
+ * tablet bay mà không hề biết mình đang ở cao độ nào, cũng không biết đã đáp chưa.
+ *
+ * Đọc thẳng từ world theo nhịp 200ms thay vì đẩy qua store: cao độ đổi mỗi frame,
+ * nếu cho vào phép so sánh của GameLoop thì sẽ ép đồng bộ store 60 lần mỗi giây.
+ */
+function FlightBadge({ world }) {
+  const [flight, setFlight] = useState(null)
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (world.player.mode !== 'heli') return setFlight(null)
+      const h = world.heli
+      const stop = h.tour.active ? h.tour.route[h.tour.index] : null
+      setFlight({
+        alt: Math.round(h.y),
+        landed: h.landed,
+        speed: Math.round(Math.hypot(h.vx, h.vz) * 3.6), // km/h cho dễ hình dung
+        tour: stop ? `${stop.icon} ${stop.name}` : null,
+        orbiting: h.tour.active && h.tour.phase === 'orbit',
+      })
+    }, 200)
+    return () => clearInterval(id)
+  }, [world])
+
+  if (!flight) return null
+  return (
+    <div className={`hud-panel hud-flight ${flight.landed ? 'landed' : ''} ${flight.tour ? 'touring' : ''}`}>
+      <span className="flight-icon">{flight.tour ? '🛩️' : '🚁'}</span>
+      <span className="flight-alt">{flight.alt}<small>m</small></span>
+      <span className="flight-speed">{flight.speed}<small>km/h</small></span>
+      <span className="flight-state">
+        {flight.tour
+          ? `${flight.orbiting ? 'Đang vòng quanh' : 'Đang bay tới'} ${flight.tour}`
+          : flight.landed ? '🛬 Đã đáp — ra được' : 'Đang bay'}
+      </span>
+    </div>
+  )
+}
+
+function MapButton({ world }) {
+  const mapOpen = useGame((s) => s.mapOpen)
+  const setMapOpen = useGame((s) => s.setMapOpen)
+  return (
+    <button
+      className="map-toggle-btn"
+      onClick={() => {
+        const next = !mapOpen
+        if (world) world.mapOpen = next
+        setMapOpen(next)
+      }}
+      title="Mở bản đồ, chọn khu vực để tự động chạy tới [M]"
+    >
+      <span>🗺️ Bản đồ</span>
+    </button>
+  )
+}
+
+/** Băng thông báo khi đang tự động chạy, kèm nút dừng. */
+function TravelBanner({ world }) {
+  const travelling = useGame((s) => s.travelling)
+  const name = useGame((s) => s.travelName)
+  const icon = useGame((s) => s.travelIcon)
+  const message = useGame((s) => s.travelMessage)
+  const touch = useGame((s) => s.touch)
+
+  if (travelling) {
+    return (
+      <div className="hud-panel hud-travel">
+        <span className="travel-icon">{icon || '🏃'}</span>
+        <span className="travel-text">Đang chạy tới <b>{name}</b></span>
+        <button
+          className="travel-stop"
+          onClick={() => world && cancelTravel(world, 'Đã dừng tự động di chuyển')}
+        >
+          ⏹ Dừng{touch ? '' : ' (hoặc bấm WASD)'}
+        </button>
+      </div>
+    )
+  }
+  if (message) return <div className="hud-panel hud-travel note">{message}</div>
+  return null
+}
+
 function Prompt() {
   const prompt = useGame((s) => s.prompt)
   const kind = useGame((s) => s.promptKind)
   const touch = useGame((s) => s.touch)
-  // The on-screen buttons carry their own labels, so keyboard hints are noise.
-  if (touch && kind !== 'hint') return null
+  if (touch && kind !== 'hint' && kind !== 'shopping' && kind !== 'interior') return null
   return <div className="hud-panel hud-prompt">{prompt}</div>
-}
-
-function MuteButton() {
-  const muted = useGame((s) => s.muted)
-  const toggleMute = useGame((s) => s.toggleMute)
-  return (
-    <button
-      className="mute-button"
-      onClick={(e) => {
-        e.currentTarget.blur()
-        setMuted(!muted)
-        toggleMute()
-      }}
-    >
-      {muted ? '🔇 sound off' : '🔊 sound on'}
-    </button>
-  )
 }
 
 export default function HUD({ world }) {
@@ -87,11 +236,20 @@ export default function HUD({ world }) {
       <Score />
       <Wanted />
       <Ammo />
+      <BuffBadge />
+      <RunModeBadge world={world} />
+      <FlightBadge world={world} />
+      <QuickInventory world={world} />
+      <PhoneButton world={world} />
+      <MapButton world={world} />
+      <TravelBanner world={world} />
       <Prompt />
-      <MuteButton />
       <WeatherWidget world={world} />
       <DisasterBanner world={world} />
       <Minimap world={world} />
     </div>
   )
 }
+
+
+
