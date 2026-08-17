@@ -453,12 +453,20 @@
 
 .touch-btn.big .touch-btn-icon { font-size: 34px; }
 
-/* On touch the bottom-right corner belongs to the thumb cluster, so the right
-   edge becomes a stack: wanted stars, minimap, then the balloon count tucked
-   underneath it. Everything there is shrunk to stay out of the way. */
+/* Trên touch, cả cột phải thuộc về cụm nút ngón tay: lưới nút cao 4 hàng nên vươn lên
+   gần nửa màn hình và trước đây đội cả minimap lẫn các nút Interact/Phone lên nhau.
+   Nên cột trái được dùng làm chỗ cho minimap + số bóng nước, còn bảng điểm thì ẩn đi.
+   Góc phải trên chỉ giữ lại mấy ngôi sao truy nã đã thu nhỏ. */
+
+/* Bảng Fun points: ẩn trên touch để nhường góc trái cho minimap. Điểm vẫn xem được ở
+   bảng truy nã trong đồn cảnh sát và ở màn hình khi bị bắt. */
+.hud.touch .hud-score { display: none; }
+
 .hud.touch .hud-minimap {
   bottom: auto;
-  top: 110px;
+  top: 16px;
+  left: 16px;
+  right: auto;
   padding: 5px;
 }
 
@@ -469,13 +477,26 @@
 }
 
 .hud.touch .hud-ammo {
-  top: 262px; /* directly below the 142px-tall minimap panel */
-  right: 16px;
-  left: auto;
+  top: 170px; /* ngay dưới panel minimap cao 146px (132 canvas + padding + viền) */
+  left: 16px;
+  right: auto;
   bottom: auto;
   padding: 5px 9px;
   gap: 5px;
 }
+
+/* Ngôi sao truy nã nhỏ lại cho gọn, và cũng để không lấn sang mấy nút thiên tai ở
+   right: 178px - cỡ 30px trước đây đẩy panel rộng tới sát chúng. */
+.hud.touch .hud-wanted {
+  padding: 6px 10px;
+}
+
+.hud.touch .hud-wanted .stars {
+  font-size: 20px;
+  letter-spacing: 1px;
+}
+
+.hud.touch .hud-wanted .note { font-size: 11px; min-height: 0; }
 
 /* Fingers need a bigger target than a mouse pointer: the chips grow to a
    comfortable tap size, and get a little breathing room from each other. */
@@ -516,10 +537,11 @@
 
 /* Short landscape screens: pull the right-hand stack up so the balloon count
    never collides with the thumb cluster below it. */
+/* Màn hình ngang thấp: minimap nhỏ lại, số bóng nước bám theo cho sát bên dưới.
+   Panel lúc này cao 126px (112 canvas + 10 padding + 4 viền) nên mốc là 16 + 126 + 8. */
 @media (max-height: 700px) {
-  .hud.touch .hud-minimap { top: 92px; }
   .hud.touch .hud-minimap canvas { width: 112px !important; height: 112px !important; }
-  .hud.touch .hud-ammo { top: 224px; }
+  .hud.touch .hud-ammo { top: 150px; }
 }
 
 @media (max-width: 900px) {
@@ -587,7 +609,8 @@
 .hud-flight .flight-speed { min-width: 60px; text-align: right; font-variant-numeric: tabular-nums; opacity: 0.85; }
 
 /* Trên tablet dãy nút chiếm góc phải, đưa đồng hồ bay lên cao khỏi vướng minimap */
-.hud.touch .hud-flight { top: 16px; left: 50%; font-size: 17px; }
+/* Xuống dưới dãy chip thời tiết (top 16, cao ~54 kể cả padding), không đè lên nó. */
+.hud.touch .hud-flight { top: 78px; left: 50%; font-size: 16px; }
 
 /* Nút lên/xuống độ cao: tô màu riêng để ngón tay tìm thấy ngay khi đang bay */
 .touch-btn.climb {

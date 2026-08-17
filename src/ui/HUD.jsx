@@ -13,6 +13,13 @@ const MAX_STARS = HEAT.stars.length
 function Wanted() {
   const stars = useGame((s) => s.stars)
   const cooling = useGame((s) => s.cooling)
+  const touch = useGame((s) => s.touch)
+
+  // Trên touch bỏ dòng chữ khi không có chuyện gì - "all clear" chỉ nhắc lại điều mà 4
+  // ngôi sao xám đã nói rồi. Lúc đang bị truy đuổi thì vẫn hiện, vì đó là thông tin
+  // thật và chỉ xuất hiện đúng lúc cần.
+  const showNote = !touch || stars > 0
+
   return (
     <div className={`hud-panel hud-wanted${cooling ? ' cooling' : ''}`}>
       <div className="stars">
@@ -20,13 +27,15 @@ function Wanted() {
           <span key={i} className={i < stars ? 'star-on' : 'star-off'}>★</span>
         ))}
       </div>
-      <div className="note">
-        {stars === 0
-          ? 'all clear'
-          : cooling
-            ? 'losing them...'
-            : 'police are chasing!'}
-      </div>
+      {showNote && (
+        <div className="note">
+          {stars === 0
+            ? 'all clear'
+            : cooling
+              ? 'losing them...'
+              : 'police are chasing!'}
+        </div>
+      )}
     </div>
   )
 }
