@@ -142,14 +142,16 @@ export default function TouchControls({ world }) {
           icon="📱"
           onTap={() => virtualTap('KeyP')}
         />
-        {/* Cùng một ô cho "chế độ tự động": đi bộ là chạy dính, đang bay là bay tự động
-            ngắm cảnh. Cả hai đều gửi phím X, nên số nút không đổi. */}
-        <TapButton
-          label={inHeli ? 'Auto' : 'Run'}
-          icon={inHeli ? '🛩️' : '🏃'}
-          disabled={inCar || onTrain}
-          onTap={() => virtualTap('KeyX')}
-        />
+        {/* Chỉ hiện khi đang bay, để bật bay tự động ngắm cảnh.
+            Đi bộ thì không cần: cần analog đẩy sát vành là đã chạy sẵn, nên nút "Run"
+            chỉ làm chật màn hình. */}
+        {inHeli && (
+          <TapButton
+            label="Auto"
+            icon="🛩️"
+            onTap={() => virtualTap('KeyX')}
+          />
+        )}
         <TapButton
           label="Map"
           icon="🗺️"

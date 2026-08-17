@@ -125,20 +125,24 @@
   gap: 8px;
 }
 
-.hud-ammo .pips {
-  display: flex;
-  gap: 3px;
+.hud-ammo { align-items: baseline; gap: 5px; }
+.hud-ammo .ammo-icon { font-size: 18px; line-height: 1; }
+
+.hud-ammo .ammo-count {
+  font-size: 22px;
+  font-weight: bold;
+  color: #38b6ff;
+  font-variant-numeric: tabular-nums; /* số không nhảy ngang khi đổi giá trị */
+  min-width: 26px;
+  text-align: right;
 }
 
-.hud-ammo .pip {
-  width: 9px;
-  height: 15px;
-  border-radius: 5px 5px 6px 6px;
-  background: #38b6ff;
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
-}
+.hud-ammo .ammo-max { font-size: 12px; opacity: 0.6; }
 
-.hud-ammo .pip.empty { background: rgba(255, 255, 255, 0.15); box-shadow: none; }
+/* Sắp hết và hết hẳn: đổi màu để nhận ra mà không phải đếm */
+.hud-ammo.low .ammo-count { color: #ffd166; }
+.hud-ammo.empty { border-color: rgba(217, 4, 41, 0.7); }
+.hud-ammo.empty .ammo-count { color: #ff6b6b; }
 
 .hud-prompt {
   bottom: 22px;
@@ -494,13 +498,11 @@
 .hud.touch .weather-icon { font-size: 18px; }
 
 
-.hud.touch .hud-ammo > span { font-size: 13px; }
-.hud.touch .hud-ammo .pips { gap: 2px; }
-.hud.touch .hud-ammo .pip {
-  width: 5px;
-  height: 11px;
-  border-radius: 3px 3px 4px 4px;
-}
+/* Trên touch số bóng nước là con số nhỏ gọn nên chip thu lại vừa đủ, không còn phải
+   chừa chỗ cho dãy 16 giọt như trước. */
+.hud.touch .hud-ammo .ammo-icon { font-size: 15px; }
+.hud.touch .hud-ammo .ammo-count { font-size: 19px; min-width: 22px; }
+.hud.touch .hud-ammo .ammo-max { font-size: 11px; }
 
 /* Only contextual hints survive on touch, and they sit low-left where no thumb
    or panel is in the way. */
@@ -593,7 +595,7 @@
   border-color: #ffd166;
 }
 
-/* Chỉ báo chế độ chạy - đặt ngay trên dãy pip bóng nước (bottom: 88px) */
+/* Chỉ báo chế độ chạy - đặt ngay trên chip số bóng nước (bottom: 88px) */
 .hud-runmode {
   bottom: 130px;
   left: 16px;
@@ -622,14 +624,11 @@
 
 .hud-runmode:hover { color: #fff; border-color: rgba(255, 255, 255, 0.4); }
 
-/* Trên tablet đã có nút 🏃 trong dãy nút, chip này chỉ còn vai trò hiển thị nên
-   dời sang cột phải, ngay dưới dãy pip bóng nước. */
-.hud.touch .hud-runmode {
-  top: 310px;
-  right: 16px;
-  left: auto;
-  bottom: auto;
-}
+/* Chip chế độ chạy không dựng trên touch (xem RunModeBadge trong HUD.jsx).
+
+   Nút Phone của HUD thì bị trùng với nút Phone trong dãy nút cảm ứng - trên ảnh chụp
+   máy thật nó còn đè lên bảng điểm. Giữ lại nút trong dãy vì ngón tay với tới dễ hơn. */
+.hud.touch .phone-toggle-btn { display: none; }
 
 .hud-inventory {
   position: absolute;

@@ -41,16 +41,15 @@ function Score() {
   )
 }
 
+// Dãy 16 giọt nước chiếm một vệt rất dài trên màn hình ngang của điện thoại; con số đọc
+// nhanh hơn mà chỉ tốn một góc nhỏ.
 function Ammo() {
   const ammo = useGame((s) => s.ammo)
   return (
-    <div className="hud-panel hud-ammo">
-      <span style={{ fontSize: 18 }}>💧</span>
-      <div className="pips">
-        {Array.from({ length: ACTIONS.maxAmmo }, (_, i) => (
-          <div key={i} className={`pip${i < ammo ? '' : ' empty'}`} />
-        ))}
-      </div>
+    <div className={`hud-panel hud-ammo${ammo === 0 ? ' empty' : ammo <= 4 ? ' low' : ''}`}>
+      <span className="ammo-icon">💧</span>
+      <span className="ammo-count">{ammo}</span>
+      <span className="ammo-max">/{ACTIONS.maxAmmo}</span>
     </div>
   )
 }
@@ -74,6 +73,9 @@ function BuffBadge() {
 function RunModeBadge({ world }) {
   const autoRun = useGame((s) => s.autoRun)
   const touch = useGame((s) => s.touch)
+  // Cần analog vốn tự phân biệt đi và chạy theo độ đẩy, nên trên touch không có "chế
+  // độ" nào để bật hay theo dõi - chip này chỉ chiếm chỗ.
+  if (touch) return null
   return (
     <button
       className={`hud-panel hud-runmode ${autoRun ? 'on' : ''}`}
