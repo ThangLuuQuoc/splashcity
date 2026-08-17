@@ -2,6 +2,7 @@ import { useGame } from '../game/store.js'
 import { checkoutCart } from '../game/systems/interiors.js'
 import { useInventoryItem } from '../game/systems/inventory.js'
 import { playBeep } from '../game/audio.js'
+import { useArmed } from './useArmed.js'
 
 export default function PhoneOverlay({ world }) {
   const phoneOpen = useGame((s) => s.phoneOpen)
@@ -10,6 +11,9 @@ export default function PhoneOverlay({ world }) {
   const inventory = useGame((s) => s.inventory) || []
   const cash = useGame((s) => s.cash) || 0
   const interior = useGame((s) => s.interior)
+  // Nút 📱 nằm ngay trong vùng ngón tay, nên bỏ qua thao tác ~1/4 giây đầu để cú chạm
+  // mở điện thoại không tự bấm hộ vào nút bên trong. Xem useArmed.js.
+  const armed = useArmed(phoneOpen)
 
   if (!phoneOpen) return null
 
@@ -20,7 +24,14 @@ export default function PhoneOverlay({ world }) {
     setPhoneOpen(false)
   }
 
+  // Nhả tay trúng nền tối cũng đóng ngay khi vừa mở - cùng một lỗi. Nút ✕ vẫn dùng
+  // closePhone nên không bị chặn.
+  const closeFromBackdrop = () => {
+    if (armed) closePhone()
+  }
+
   const handlePay = () => {
+    if (!armed) return
     if (world) {
       const res = checkoutCart(world)
       if (res && res.success) {
@@ -37,13 +48,14 @@ export default function PhoneOverlay({ world }) {
   }
 
   const handleUse = (itemId) => {
+    if (!armed) return
     if (world) {
       useInventoryItem(world, itemId)
     }
   }
 
   return (
-    <div className="phone-backdrop" onClick={closePhone}>
+    <div className="phone-backdrop" onClick={closeFromBackdrop}>
       <div className="phone-wrapper" onClick={(e) => e.stopPropagation()}>
         {/* Khung viền điện thoại Smartphone cao cấp */}
         <div className="phone-screen">

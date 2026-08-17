@@ -6,6 +6,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useGame } from '../game/store.js'
+import { useArmed } from './useArmed.js'
 import { CITY } from '../game/config.js'
 import { roadCenter } from '../game/city.js'
 import { landmarkPosition } from '../game/landmarks.js'
@@ -19,6 +20,7 @@ export default function MapOverlay({ world }) {
   const travelling = useGame((s) => s.travelling)
   const travelName = useGame((s) => s.travelName)
   const listRef = useRef(null)
+  const armed = useArmed(mapOpen)
 
   // Bàn phím: mũi tên lên/xuống chạy trong danh sách, Enter/Space chọn. Mở bản đồ là
   // mục đầu tiên được focus sẵn, nên chơi bằng bàn phím không cần chạm tới chuột.
@@ -51,13 +53,20 @@ export default function MapOverlay({ world }) {
   const blocked = travelBlockedReason(world)
   const p = world.player
 
+  // Bỏ qua thao tác trong ~1/4 giây đầu: xem chú thích trong useArmed.js.
   const close = () => {
     world.mapOpen = false
     setMapOpen(false)
   }
 
   const pick = (landmark) => {
+    if (!armed) return
     if (startTravel(world, landmark)) close()
+  }
+
+  // Nhả tay trúng nền tối cũng đóng bản đồ ngay khi vừa mở - cùng một lỗi.
+  const closeFromBackdrop = () => {
+    if (armed) close()
   }
 
   // Thành phố là hình vuông quanh gốc toạ độ, quy về khoảng 0..SIZE trên màn hình.
@@ -68,7 +77,7 @@ export default function MapOverlay({ world }) {
   for (let i = 0; i <= CITY.blocks; i++) grid.push(toPx(roadCenter(i)))
 
   return (
-    <div className="map-backdrop" onClick={close}>
+    <div className="map-backdrop" onClick={closeFromBackdrop}>
       <div className="map-window" onClick={(e) => e.stopPropagation()}>
         <div className="map-header">
           <span className="map-title">🗺️ BẢN ĐỒ SPLASH CITY</span>
