@@ -29,6 +29,8 @@ export function createHelicopter(city) {
     landed: true,
     // Vòi rồng của trực thăng cảnh sát làm ướt cánh quạt: 0 = khô, 1 = ướt sũng.
     soaked: 0,
+    stagger: 0, // giây còn loạng choạng sau khi ăn đạn cao su
+    wobble: 0, // pha rung của thân máy bay lúc loạng choạng
     sprayed: 0, // còn đang bị phun trong bao nhiêu giây nữa (policeHeli.js ghi vào)
     // Bay tự động ngắm cảnh
     tour: {
@@ -240,6 +242,18 @@ export function updateHelicopter(world, dt, exitPressed) {
   // - vẫn còn cả một quãng để xoay xở, mà vẫn thấy rõ là mình đang thua.
   if (h.sprayed > 0) h.sprayed -= dt
   else h.soaked = Math.max(0, h.soaked - (h.landed ? HELI.dryOnGround : POLICE_HELI.soakDrain) * dt)
+  // Ăn đạn cao su: máy bay rung giật, tay lái ăn kém hẳn trong hơn một giây. Không mất
+  // lái hoàn toàn - trẻ con mà bị cướp mất quyền điều khiển thì chỉ thấy ức chế, còn
+  // lái nặng tay vài giây thì thành một pha thót tim rồi gỡ lại được.
+  if (h.stagger > 0) {
+    h.stagger = Math.max(0, h.stagger - dt)
+    h.wobble += dt * 26
+  } else {
+    h.wobble = 0
+  }
+  const shaken = h.stagger > 0 ? h.stagger / POLICE_HELI.gun.staggerTime : 0
+  const grip = 1 - 0.5 * shaken // vẫn lái được, chỉ nặng tay hẳn đi
+
   const climbRate = HELI.climbRate * (1 - POLICE_HELI.liftPenalty * h.soaked)
   const maxSpeed = HELI.maxSpeed * (1 - POLICE_HELI.speedPenalty * h.soaked)
   const ceiling = HELI.maxAltitude * (1 - POLICE_HELI.ceilingPenalty * h.soaked)
@@ -252,14 +266,16 @@ export function updateHelicopter(world, dt, exitPressed) {
   if (h.tour.active) {
     updateTour(world, dt)
   } else {
-    // Hướng mũi.
-    h.heading -= turn * HELI.yawRate * dt
+    // Hướng mũi. Lúc loạng choạng thì mũi bị hất lệch theo nhịp rung, và bẻ lái cũng
+    // không ăn được như thường.
+    h.heading -= turn * HELI.yawRate * grip * dt
+    if (shaken > 0) h.heading += Math.sin(h.wobble) * 0.9 * shaken * dt
 
     // Đẩy theo hướng mũi đang chỉ.
     const sin = Math.sin(h.heading)
     const cos = Math.cos(h.heading)
-    h.vx += sin * fwd * HELI.accel * dt
-    h.vz += cos * fwd * HELI.accel * dt
+    h.vx += sin * fwd * HELI.accel * grip * dt
+    h.vz += cos * fwd * HELI.accel * grip * dt
 
     // Giảm chấn, rồi chặn trần tốc độ.
     const damp = Math.max(0, 1 - HELI.drag * dt)
@@ -298,6 +314,12 @@ export function updateHelicopter(world, dt, exitPressed) {
     : turn * HELI.tiltMax
   h.tiltPitch += (targetPitch - h.tiltPitch) * Math.min(1, 4 * dt)
   h.tiltRoll += (targetRoll - h.tiltRoll) * Math.min(1, 4 * dt)
+  if (shaken > 0) {
+    // Nghiêng ngả thấy rõ trên hình - đây là tín hiệu cho người chơi biết chuyện gì
+    // vừa xảy ra, chứ không phải chỉ thấy máy bay tự nhiên trôi.
+    h.tiltRoll += Math.sin(h.wobble) * 0.32 * shaken
+    h.tiltPitch += Math.cos(h.wobble * 1.3) * 0.22 * shaken
+  }
 
   // Trần bay và sàn.
   if (h.y > HELI.maxAltitude) {

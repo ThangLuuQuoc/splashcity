@@ -29,7 +29,7 @@ Không dùng "bắt tức thì trên không" — trẻ con bay ở 80m mà bị 
 chế. Thay vào đó là một chuỗi leo thang có tín hiệu rõ ràng, mỗi bước đều thoát được:
 
 ```
-  2 sao + đang bay
+  1 sao + đang bay
         │
         ▼
   [1] Trực thăng cảnh sát xuất phát  ──► báo động trên HUD + chấm xanh nhấp nháy trên minimap
@@ -39,6 +39,7 @@ chế. Thay vào đó là một chuỗi leo thang có tín hiệu rõ ràng, m�
         │        → bay liên tục thì nới được khoảng cách; vòng vèo là bị bắt kịp
         ▼
   [3] Trong 26m: đèn pha khoá mục tiêu ──► máu truy nã KHÔNG nguội nữa (mấu chốt)
+        │        Trong 22m: bắn đạn cao su ──► rung giật, tay lái còn một nửa 1.5 giây
         │
         ▼
   [4] Giữ khoá đủ 4 giây rồi mới trong 14m: vòi rồng phun ──► ướt 0→1 trong ~6 giây

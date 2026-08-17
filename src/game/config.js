@@ -285,10 +285,9 @@ export const HELI = {
 // thẳng cũng không bao giờ cắt được đuôi và người chơi mất hẳn đường thoát.
 export const POLICE_HELI = {
   count: 2,
-  // 2 sao là lúc xe tuần tra đã bám sát, nên đó cũng là lúc người chơi nhảy lên trực
-  // thăng để cắt đuôi - phải có đội bay ở đó thì đường không mới không còn là chỗ trốn
-  // miễn phí. Chỉ 1 sao thì vẫn được bay ngắm cảnh yên thân.
-  minStars: 2,
+  // Hễ bị truy nã là bay lên trời cũng không thoát: 1 sao đã có đội bay. Bay ngắm cảnh
+  // lúc không sao vẫn hoàn toàn yên thân, vì điều kiện là stars >= 1.
+  minStars: 1,
   spawnDelay: 3.5, // giãn cách giữa hai chiếc
   spawnMin: 150, // xuất phát ngoài tầm mắt...
   spawnMax: 190, // ...nhưng đủ gần để cuộc rượt bắt đầu trước khi máu truy nã nguội
@@ -328,6 +327,22 @@ export const POLICE_HELI = {
   speedPenalty: 0.25, // ...và bay chậm hơn 25%
   ceilingPenalty: 0.6, // trần bay bị ép tụt, buộc phải hạ cánh
   sinkRate: 0.5, // tốc độ bị dìm xuống, tính theo HELI.climbRate
+
+  // Đạn cao su: bắn vào thân máy bay cho rung giật mất thăng bằng vài giây. Không gây
+  // sát thương, không bắt được ai - chỉ làm người chơi loạng choạng đủ để đội bay áp
+  // sát. Đây là thứ khiến quãng "đang bị đèn pha khoá" có việc để xảy ra, thay vì chỉ
+  // đứng đợi cho tới lúc vòi rồng với tới.
+  gun: {
+    range: 22, // xa hơn vòi rồng (14m): bị bắn trước, bị xịt nước sau
+    interval: 1.4, // giây giữa hai phát
+    speed: 52,
+    spread: 0.035, // lệch nhẹ cho có phát trượt
+    hitRadius: 2.6,
+    life: 2.2, // bay quá lâu không trúng thì tự tắt
+    staggerTime: 1.5, // giây mất thăng bằng sau mỗi phát trúng
+    kick: 6, // cú hích vào vận tốc lúc trúng đạn
+    shake: 0.5,
+  },
 
   bustRange: 12, // chỉ bắt trên không khi máy bay đã ướt sũng
   bustTime: 5.0, // và vẫn phải giữ được ngần này giây - vẫn còn đường vùng ra

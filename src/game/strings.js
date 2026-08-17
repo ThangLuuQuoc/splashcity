@@ -213,6 +213,7 @@ export const STRINGS = {
   'heli.spotted': { vi: '🔦 Đèn pha đã khoá - bay đi ngay!', en: '🔦 Searchlight locked on - fly!' },
   'heli.soaking': { vi: '💦 Cánh quạt ướt sũng - phải hạ cánh!', en: '💦 Rotors soaked - you have to land!' },
   'heli.wet': { vi: 'Ướt', en: 'Wet' },
+  'heli.rubberHit': { vi: '💥 Trúng đạn cao su - máy bay mất thăng bằng!', en: '💥 Rubber round hit - the helicopter is reeling!' },
 
   // --- thanh toán & buff --------------------------------------------------
   'cart.empty': { vi: 'Giỏ hàng trống!', en: 'Your cart is empty!' },

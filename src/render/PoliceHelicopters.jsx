@@ -28,7 +28,14 @@ function copMetalMaterial() {
 }
 function beamMaterial() {
   return getMaterial('copheli:beam', () => new THREE.MeshBasicMaterial({
-    color: '#fff3c4', transparent: true, opacity: 0.16, depthWrite: false,
+    color: '#fff3c4', transparent: true, opacity: 0.28, depthWrite: false,
+    side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+  }))
+}
+// Vũng sáng đọng trên người chơi ở đầu kia chùm đèn
+function poolMaterial() {
+  return getMaterial('copheli:pool', () => new THREE.MeshBasicMaterial({
+    color: '#fff8d6', transparent: true, opacity: 0.5, depthWrite: false,
     side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
   }))
 }
@@ -48,6 +55,7 @@ function CopHeli({ world, index }) {
   const beamRef = useRef()
   const beamConeRef = useRef()
   const jetRef = useRef()
+  const poolRef = useRef()
 
   useFrame(() => {
     const h = world.policeHelis[index]
@@ -69,24 +77,35 @@ function CopHeli({ world, index }) {
       beaconRef.current.material.emissiveIntensity = on ? 2.6 : 0.25
     }
 
-    // Đèn pha và vòi rồng: nhóm ngoài thân, xoay để trục -Z chỉ vào người chơi. Nón được
-    // kéo dài đúng bằng khoảng cách nên vệt sáng luôn chạm tới mục tiêu.
+    // Đèn pha và vòi rồng: nhóm riêng ngoài thân, xoay cho chỉ thẳng vào người chơi rồi
+    // kéo dài nón đúng bằng khoảng cách, nên vệt sáng chạm tới tận nơi.
+    //
+    // Object3D.lookAt của three quay vật thể sao cho trục +Z hướng vào đích (chỉ camera
+    // và đèn mới là -Z). Trước đây ở đây dựng nón về phía -Z, thành ra đèn pha chiếu
+    // ngược ra sau lưng: đo bằng toạ độ thật thì đáy nón nằm cách người chơi 19m.
     const beam = beamRef.current
     if (beam) {
       const p = world.player
       beam.visible = h.spotOn
       if (h.spotOn) {
+        const ty = p.y + 1.4 // ngắm vào thân máy bay chứ không phải càng đáp
         beam.position.set(h.x, h.y + 0.6, h.z)
-        beam.lookAt(p.x, p.y + 0.9, p.z)
-        const dist = Math.max(1, Math.hypot(p.x - h.x, p.y + 0.9 - (h.y + 0.6), p.z - h.z))
+        beam.lookAt(p.x, ty, p.z)
+        const dist = Math.max(1, Math.hypot(p.x - h.x, ty - (h.y + 0.6), p.z - h.z))
         if (beamConeRef.current) {
           beamConeRef.current.scale.set(1, dist, 1)
-          beamConeRef.current.position.z = -dist / 2
+          beamConeRef.current.position.z = dist / 2
         }
         if (jetRef.current) {
           jetRef.current.visible = h.cannonOn
           jetRef.current.scale.set(1, dist, 1)
-          jetRef.current.position.z = -dist / 2
+          jetRef.current.position.z = dist / 2
+        }
+        // Vũng sáng đọng trên chính người chơi - thứ cho thấy rõ "nó đang chiếu vào MÌNH"
+        if (poolRef.current) {
+          poolRef.current.position.z = dist
+          const pulse = 1 + Math.sin(world.time * 9) * 0.06
+          poolRef.current.scale.set(pulse, pulse, 1)
         }
       }
     }
@@ -122,18 +141,55 @@ function CopHeli({ world, index }) {
         </group>
       </group>
 
-      {/* Vệt đèn pha + tia nước, luôn chỉ vào người chơi nên nằm ngoài group thân */}
+      {/* Vệt đèn pha + tia nước, luôn chỉ vào người chơi nên nằm ngoài group thân.
+          Nón xoay -90° quanh X: đỉnh nhọn nằm ở bóng đèn, miệng loe ra phía người chơi,
+          đúng chiều một chùm sáng thật. */}
       <group ref={beamRef} visible={false}>
-        <mesh ref={beamConeRef} rotation={[Math.PI / 2, 0, 0]} material={beamMaterial()}>
-          <coneGeometry args={[2.4, 1, 14, 1, true]} />
+        <mesh ref={beamConeRef} rotation={[-Math.PI / 2, 0, 0]} material={beamMaterial()}>
+          <coneGeometry args={[1.7, 1, 16, 1, true]} />
         </mesh>
-        <mesh ref={jetRef} rotation={[Math.PI / 2, 0, 0]} material={jetMaterial()} visible={false}>
-          <coneGeometry args={[0.75, 1, 10, 1, true]} />
+        <mesh ref={jetRef} rotation={[-Math.PI / 2, 0, 0]} material={jetMaterial()} visible={false}>
+          <coneGeometry args={[0.7, 1, 10, 1, true]} />
+        </mesh>
+        <mesh ref={poolRef} material={poolMaterial()}>
+          <circleGeometry args={[2.1, 20]} />
         </mesh>
       </group>
     </>
   )
 }
+
+/**
+ * Đạn cao su đang bay: quả cầu cam nhỏ, gộp về một InstancedMesh nên bắn dày mấy cũng
+ * chỉ tốn đúng một draw call. Viên chưa dùng bị đẩy ra ngoài tầm nhìn thay vì phải dựng
+ * lại lưới mỗi lần số lượng thay đổi.
+ */
+function RubberShots({ world }) {
+  const ref = useRef()
+
+  useFrame(() => {
+    const mesh = ref.current
+    if (!mesh) return
+    const shots = world.rubberShots
+    for (let i = 0; i < shots.length; i++) {
+      const s = shots[i]
+      if (s.active) DUMMY.position.set(s.x, s.y, s.z)
+      else DUMMY.position.set(0, -9999, 0)
+      DUMMY.updateMatrix()
+      mesh.setMatrixAt(i, DUMMY.matrix)
+    }
+    mesh.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, world.rubberShots.length]} frustumCulled={false}>
+      <sphereGeometry args={[0.22, 8, 6]} />
+      <meshStandardMaterial color="#ff7b00" emissive="#c2410c" emissiveIntensity={0.6} roughness={0.8} />
+    </instancedMesh>
+  )
+}
+
+const DUMMY = new THREE.Object3D()
 
 export default function PoliceHelicopters({ world }) {
   return (
@@ -141,6 +197,7 @@ export default function PoliceHelicopters({ world }) {
       {Array.from({ length: POLICE_HELI.count }, (_, i) => (
         <CopHeli key={i} world={world} index={i} />
       ))}
+      <RubberShots world={world} />
     </>
   )
 }

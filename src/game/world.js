@@ -7,7 +7,7 @@ import { createWeather } from './systems/weather.js'
 import { createDisaster } from './systems/disasters.js'
 import { createTravel } from './systems/navigation.js'
 import { createHelicopter } from './systems/helicopter.js'
-import { createPoliceHelis, clearPoliceHelis } from './systems/policeHeli.js'
+import { createPoliceHelis, clearPoliceHelis, createRubberShots } from './systems/policeHeli.js'
 import { buildLandmarks } from './landmarks.js'
 import { TIME } from './config.js'
 
@@ -207,6 +207,7 @@ export function createWorld() {
 
     // Đội bay truy bắt khi người chơi trốn lên trời.
     policeHelis: createPoliceHelis(),
+    rubberShots: createRubberShots(), // đạn cao su đang bay
     copHeliTimer: 0,
     copHeliAlert: 'none', // none | scramble | chase | spot | cannon
     copHeliAlertTimer: 0,

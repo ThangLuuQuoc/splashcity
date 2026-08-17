@@ -14,6 +14,7 @@ import { POLICE_HELI, HELI, CITY } from '../config.js'
 import { resolveStatic } from '../collision.js'
 import { visibilityFactor } from './weather.js'
 import { bustPlayer } from './police.js'
+import { playRubberShot, playRubberHit } from '../audio.js'
 
 const MAX_POLICE_HELIS = POLICE_HELI.count
 
@@ -33,6 +34,7 @@ export function createPoliceHelis() {
       spotOn: false,
       cannonOn: false,
       lockTimer: 0, // giữ được đèn pha bao lâu rồi - đủ lâu mới phun vòi rồng
+      gunTimer: 0, // đếm ngược tới phát đạn cao su tiếp theo
       soaked: 0, // ăn bóng nước thì phải lùi ra, đây là counter-play của người chơi
       bustTimer: 0,
       giveUp: 0,
@@ -41,6 +43,90 @@ export function createPoliceHelis() {
     }
   }
   return arr
+}
+
+/** Kho đạn cao su dùng chung cho cả đội bay. */
+export function createRubberShots() {
+  const arr = new Array(18)
+  for (let i = 0; i < arr.length; i++) {
+    arr[i] = { active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, life: 0 }
+  }
+  return arr
+}
+
+/** Bắn một phát về phía chỗ người chơi SẼ tới, kèm chút lệch cho có phát trượt. */
+function fireRubberShot(world, h) {
+  const cfg = POLICE_HELI.gun
+  const shot = world.rubberShots.find((s) => !s.active)
+  if (!shot) return
+
+  const p = world.player
+  const v = playerVelocity(world)
+  const travel = distanceToPlayer(world, h) / cfg.speed
+  const tx = p.x + v.vx * travel
+  const ty = p.y + 1.4
+  const tz = p.z + v.vz * travel
+
+  // Nòng nằm ở mũi máy bay, để viên đạn không lòi ra từ giữa thân.
+  const sx = h.x + Math.sin(h.heading) * 1.6
+  const sz = h.z + Math.cos(h.heading) * 1.6
+  const sy = h.y + 0.9
+
+  const dx = tx - sx
+  const dy = ty - sy
+  const dz = tz - sz
+  const len = Math.hypot(dx, dy, dz) || 1
+  const jitter = () => (Math.random() - 0.5) * cfg.spread
+
+  shot.active = true
+  shot.x = sx
+  shot.y = sy
+  shot.z = sz
+  shot.vx = (dx / len + jitter()) * cfg.speed
+  shot.vy = (dy / len + jitter()) * cfg.speed
+  shot.vz = (dz / len + jitter()) * cfg.speed
+  shot.life = cfg.life
+  playRubberShot()
+}
+
+/**
+ * Đạn cao su đang bay. Trúng thân máy bay người chơi thì hích lệch vận tốc và ghi
+ * `heli.stagger` - helicopter.js đọc con số đó để làm loạng choạng tay lái.
+ */
+function updateRubberShots(world, dt) {
+  const cfg = POLICE_HELI.gun
+  const p = world.player
+  for (let i = 0; i < world.rubberShots.length; i++) {
+    const s = world.rubberShots[i]
+    if (!s.active) continue
+
+    s.x += s.vx * dt
+    s.y += s.vy * dt
+    s.z += s.vz * dt
+    s.life -= dt
+    if (s.life <= 0) { s.active = false; continue }
+
+    if (p.mode !== 'heli' || p.invuln > 0) continue
+    const d = Math.hypot(s.x - p.x, s.y - (p.y + 1.4), s.z - p.z)
+    if (d > cfg.hitRadius) continue
+
+    s.active = false
+    const heli = world.heli
+
+    // Đang loạng choạng dở thì phát sau chỉ nảy ra chứ không cộng thêm thời gian. Hai
+    // chiếc thay nhau bắn mỗi 1.4 giây, mỗi phát ghi đè 1.5 giây - cộng dồn thì người
+    // chơi không bao giờ lấy lại được tay lái, và đường bay thoát biến mất hoàn toàn.
+    if (heli.stagger > 0) continue
+
+    heli.stagger = cfg.staggerTime
+    // Cú hích theo đúng hướng viên đạn đang bay, chuẩn hoá lại để phát nào cũng như nhau.
+    const len = Math.hypot(s.vx, s.vy, s.vz) || 1
+    heli.vx += (s.vx / len) * cfg.kick
+    heli.vz += (s.vz / len) * cfg.kick
+    heli.vy += (s.vy / len) * cfg.kick * 0.35
+    world.camera.shake = Math.min(1, world.camera.shake + cfg.shake)
+    playRubberHit()
+  }
 }
 
 /** Người chơi đang ở trên không - lái trực thăng, hoặc đứng trên cái gì đó rất cao. */
@@ -61,6 +147,7 @@ function spawnPoliceHeli(world) {
   if (!h) return false
 
   const p = world.player
+  const cfg = POLICE_HELI
   const angle = Math.random() * Math.PI * 2
   const dist = POLICE_HELI.spawnMin + Math.random() * (POLICE_HELI.spawnMax - POLICE_HELI.spawnMin)
   const edge = CITY.half + CITY.roadWidth / 2
@@ -78,6 +165,7 @@ function spawnPoliceHeli(world) {
   h.spotOn = false
   h.cannonOn = false
   h.lockTimer = 0
+  h.gunTimer = cfg.gun.interval
   h.soaked = 0
   h.bustTimer = 0
   h.giveUp = 0
@@ -88,6 +176,7 @@ function spawnPoliceHeli(world) {
 
 export function clearPoliceHelis(world) {
   for (const h of world.policeHelis) h.active = false
+  for (const s of world.rubberShots) s.active = false
   world.copHeliAlert = 'none'
   world.copHeliAlertTimer = 0
 }
@@ -288,6 +377,18 @@ export function updatePoliceHelis(world, dt) {
     // Ướt theo thời gian bị phun, KHÔNG theo số vòi đang chĩa vào. Cộng dồn từng chiếc
     // khiến hai chiếc cùng phun là ướt sũng trong nửa thời gian thiết kế, và người chơi
     // chẳng có cách nào biết vì sao lần này mình chìm nhanh gấp đôi lần trước.
+    // Súng đạn cao su: bắt đầu sau khi đã khoá đèn pha đủ lâu, tầm xa hơn vòi rồng nên
+    // người chơi ăn đạn rung giật trước khi bị xịt nước.
+    const canShoot = h.spotOn && h.lockTimer >= cfg.lockDelay && h.soaked <= 0 &&
+      p.mode === 'heli' && p.invuln <= 0 && dist < cfg.gun.range
+    h.gunTimer -= dt
+    if (canShoot && h.gunTimer <= 0) {
+      h.gunTimer = cfg.gun.interval
+      fireRubberShot(world, h)
+    } else if (!canShoot) {
+      h.gunTimer = Math.min(h.gunTimer, cfg.gun.interval * 0.5)
+    }
+
     if (h.cannonOn && !sprayed) {
       // Cánh quạt ướt thì mất lực nâng - helicopter.js đọc world.heli.soaked.
       world.heli.soaked = Math.min(1, world.heli.soaked + cfg.soakPerSec * dt)
@@ -313,6 +414,8 @@ export function updatePoliceHelis(world, dt) {
       h.bustTimer = Math.max(0, h.bustTimer - dt * 2)
     }
   }
+
+  updateRubberShots(world, dt)
 
   if (!sprayed && world.heli.sprayed > 0) world.heli.sprayed = 0
   world.copHeliDistance = closest

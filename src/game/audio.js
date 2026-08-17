@@ -240,4 +240,18 @@ export function playFruitThud() {
   blip({ type: 'triangle', freq: 220, to: 70, dur: 0.12, gain: 0.45 })
 }
 
+/** Tiếng "tóc" khô khốc của súng đạn cao su trên trực thăng cảnh sát. */
+export function playRubberShot() {
+  const c = ensure()
+  if (!c || muted) return
+  blip({ type: 'square', freq: 520, to: 180, dur: 0.07, gain: 0.18 })
+}
+
+/** Đạn cao su nảy vào thân máy bay - trầm và nảy, nghe là biết không phải đạn thật. */
+export function playRubberHit() {
+  const c = ensure()
+  if (!c || muted) return
+  blip({ type: 'sine', freq: 160, to: 55, dur: 0.22, gain: 0.5 })
+}
+
 

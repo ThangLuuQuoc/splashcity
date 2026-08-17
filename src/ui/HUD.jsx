@@ -171,6 +171,7 @@ function FlightBadge({ world }) {
         // vì dòng prompt dưới đáy màn hình bị updatePrompt ghi đè mỗi frame.
         alert: world.copHeliAlert,
         wet: Math.round(h.soaked * 100),
+        staggered: h.stagger > 0,
       })
     }, 200)
     return () => clearInterval(id)
@@ -186,7 +187,10 @@ function FlightBadge({ world }) {
     spot: 'heli.spotted',
     cannon: 'heli.soaking',
   }[flight.alert]
-  const hunted = !!alertKey && !flight.landed
+  // Trúng đạn cao su thì báo đè lên mọi thứ khác: nó giải thích ngay tại chỗ vì sao
+  // máy bay đang chồm lên chồm xuống không theo tay lái.
+  const message = flight.staggered ? 'heli.rubberHit' : alertKey
+  const hunted = !!message && !flight.landed
 
   return (
     <div className={`hud-panel hud-flight ${flight.landed ? 'landed' : ''} ${flight.tour ? 'touring' : ''} ${hunted ? 'hunted' : ''}`}>
@@ -198,7 +202,7 @@ function FlightBadge({ world }) {
       )}
       <span className="flight-state">
         {hunted
-          ? t(alertKey)
+          ? t(message)
           : flight.tour
             ? t(flight.orbiting ? 'flight.orbiting' : 'flight.goingTo', { place: flight.tour })
             : t(flight.landed ? 'flight.landed' : 'flight.flying')}
