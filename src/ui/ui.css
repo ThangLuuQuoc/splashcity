@@ -676,6 +676,20 @@
   background: rgba(72, 202, 228, 0.28);
   box-shadow: 0 0 18px rgba(72, 202, 228, 0.4);
 }
+/* Bị trực thăng cảnh sát bám: đỏ và đập nhịp, đọc được từ khoé mắt */
+.hud-flight.hunted {
+  border-color: #ff3355;
+  background: rgba(255, 51, 85, 0.34);
+  box-shadow: 0 0 20px rgba(255, 51, 85, 0.55);
+  animation: huntedPulse 0.7s infinite alternate;
+}
+
+@keyframes huntedPulse {
+  from { box-shadow: 0 0 12px rgba(255, 51, 85, 0.4); }
+  to { box-shadow: 0 0 26px rgba(255, 51, 85, 0.85); }
+}
+
+.hud-flight .flight-wet { color: #8ee6ff; font-size: 12px; }
 .hud-flight small { font-size: 10px; opacity: 0.75; margin-left: 1px; }
 .hud-flight .flight-icon { font-size: 17px; }
 .hud-flight .flight-state { font-size: 11px; font-weight: normal; opacity: 0.9; }
@@ -1166,57 +1180,60 @@
 
 .phone-body {
   flex: 1;
-  padding: 0 14px;
+  min-height: 0;
+  padding: 0 14px 12px;
   overflow-y: auto;
   color: #fff;
 }
 
-.phone-scanner-frame {
-  height: 140px;
-  border: 2px dashed #00b4d8;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+/* Ở màn tính tiền, phần cuộn nằm trong chính hoá đơn - thân máy không cuộn nữa.
+   Phải là flex CỘT: để flex hàng thì cột thanh toán co lại vừa đúng bề ngang chữ dài
+   nhất, thành ra hoá đơn hẹp hơn hẳn thẻ SplashPay phía trên và thừa một khoảng trống
+   bên phải. */
+.phone-body.checkout {
   overflow: hidden;
-  background: rgba(0, 180, 216, 0.08);
-  margin-bottom: 12px;
-}
-
-.scanner-line {
-  position: absolute;
-  width: 100%;
-  height: 3px;
-  background: #d90429;
-  box-shadow: 0 0 10px #d90429;
-  animation: scanMove 1.5s infinite alternate ease-in-out;
-}
-
-@keyframes scanMove {
-  from { top: 10%; }
-  to { top: 90%; }
-}
-
-.scanner-target-qr {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #00b4d8;
-  font-weight: bold;
 }
 
-.qr-box-icon {
-  font-size: 32px;
+/* Quầy tính tiền: hoá đơn chiếm hết chỗ, việc quét mã gói gọn trong nút trả tiền.
+   Trước đây một khung camera giả cao 140px ngồi chình ình phía trên đẩy cả danh sách
+   hàng lẫn nút thanh toán xuống dưới mép màn hình điện thoại. */
+.phone-checkout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+/* Vạch quét chạy ngang trong nút, chỉ hiện đúng lúc đang quét */
+.pay-scan-strip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: payScan 0.65s linear infinite;
+}
+
+@keyframes payScan {
+  from { left: -42%; }
+  to { left: 100%; }
 }
 
 .phone-cart-list {
   background: rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   padding: 10px;
-  margin-bottom: 12px;
+  /* Giỏ hàng dài thì tự cuộn BÊN TRONG, để dòng tổng tiền và nút trả tiền luôn nằm
+     nguyên tại chỗ chứ không trôi khỏi màn hình. Không cho giãn (`flex: 0 1 auto`):
+     mua vài món thì hoá đơn ôm sát nội dung, chứ để nó nở hết chỗ thì thành một mảng
+     nền trống trơn nhìn như lỗi. */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .phone-cart-list h4 {
@@ -1236,15 +1253,25 @@
 .phone-cart-total {
   display: flex;
   justify-content: space-between;
-  margin-top: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 209, 102, 0.12);
   font-weight: bold;
-  font-size: 14px;
+  font-size: 15px;
   color: #ffd166;
+  flex-shrink: 0;
+  /* Đẩy tổng tiền + nút trả tiền xuống đáy máy, khoảng trống rơi vào giữa hoá đơn và
+     phần thanh toán - đúng chỗ nó nên ở. */
+  margin-top: auto;
 }
 
 .phone-pay-btn {
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
   width: 100%;
-  padding: 12px;
+  padding: 14px 12px;
   border-radius: 14px;
   border: none;
   font-weight: bold;

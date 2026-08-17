@@ -3,7 +3,8 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { SUPERMARKET_SPACE } from '../game/systems/interiors.js'
 import { ProductInstances } from './Products.jsx'
-import { SHELF_PRODUCTS } from './martLayout.js'
+import { SHELF_PRODUCTS, SHELF_TAGS } from './martLayout.js'
+import { SUPERMARKET_PRODUCTS } from '../game/config.js'
 import { getCanvasTexture } from './assets.js'
 
 // Texture nằm ở kho dùng chung (assets.js) chứ không trong useMemo của component:
@@ -470,8 +471,9 @@ export default function SupermarketInterior({ world }) {
         </mesh>
       </group>
 
-      {/* Toàn bộ hàng hoá trên 5 kệ Tầng 1, gộp về vài InstancedMesh dùng chung */}
+      {/* Toàn bộ hàng hoá của cả hai tầng, gộp về vài InstancedMesh dùng chung */}
       <ProductInstances items={SHELF_PRODUCTS} />
+      <ShelfPriceTags />
 
       {/* ==========================================
           KHU TẦNG 2: SÚNG NƯỚC TITAN & NƯỚC GIẢI KHÁT
@@ -479,34 +481,90 @@ export default function SupermarketInterior({ world }) {
       {/* Kệ 1: Khu Súng Nước Super Soaker Titan */}
       <group position={[-6, 6.0, -8]}>
         <ShelfRack width={6} height={2.6} depth={1.4} label="🔫 SÚNG NƯỚC SOAKER TITAN" />
-        <mesh position={[-1.8, 0.9, 0]}>
-          <boxGeometry args={[1.6, 0.55, 0.4]} />
-          <meshStandardMaterial color="#06d6a0" />
-        </mesh>
-        <mesh position={[0, 0.9, 0]}>
-          <boxGeometry args={[1.6, 0.55, 0.4]} />
-          <meshStandardMaterial color="#ff006e" />
-        </mesh>
-        <mesh position={[1.8, 0.9, 0]}>
-          <boxGeometry args={[1.6, 0.55, 0.4]} />
-          <meshStandardMaterial color="#3a86ff" />
-        </mesh>
       </group>
 
       {/* Kệ 2: Kệ Nước Tăng Lực Sting Dâu */}
       <group position={[2, 6.0, -8]}>
         <ShelfRack width={5} height={2.6} depth={1.4} label="🥤 NƯỚC TĂNG LỰC STING DÂU" />
-        {[-1.5, -0.5, 0.5, 1.5].map((xOffset, idx) => (
-          <mesh key={idx} position={[xOffset, 0.8, 0]}>
-            <cylinderGeometry args={[0.2, 0.2, 0.7, 12]} />
-            <meshStandardMaterial color="#e63946" metalness={0.4} />
-          </mesh>
-        ))}
       </group>
     </group>
   )
 }
 
+
+/** Bảng tên dãy hàng: nền đỏ, chữ trắng, tự thu nhỏ cho vừa tấm bảng. */
+function shelfSignTexture(label) {
+  return getCanvasTexture(`mart:sign:${label}`, 768, 128, (ctx) => {
+    ctx.fillStyle = '#d62828'
+    ctx.fillRect(0, 0, 768, 128)
+    ctx.strokeStyle = '#ffd166'
+    ctx.lineWidth = 8
+    ctx.strokeRect(6, 6, 756, 116)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    let px = 62
+    do {
+      ctx.font = `bold ${px}px sans-serif`
+      if (ctx.measureText(label).width <= 700) break
+      px -= 2
+    } while (px > 14)
+    ctx.fillText(label, 384, 68)
+  })
+}
+
+/**
+ * Bảng giá gắn mép đợt kệ. Đây mới là thứ trả lời câu "mình đang định mua cái gì, bao
+ * nhiêu tiền" - hình bao bì cho biết đó là hộp gì, còn giá thì phải đọc mới biết.
+ */
+function priceTagTexture(productId) {
+  const prod = SUPERMARKET_PRODUCTS.find((p) => p.id === productId)
+  if (!prod) return null
+  return getCanvasTexture(`mart:tag:${productId}`, 384, 128, (ctx) => {
+    ctx.fillStyle = '#fdfdfd'
+    ctx.fillRect(0, 0, 384, 128)
+    ctx.fillStyle = '#f1f3f5'
+    ctx.fillRect(0, 0, 384, 10)
+    ctx.strokeStyle = '#adb5bd'
+    ctx.lineWidth = 5
+    ctx.strokeRect(3, 3, 378, 122)
+
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = '#212529'
+    let px = 42
+    do {
+      ctx.font = `bold ${px}px sans-serif`
+      if (ctx.measureText(prod.shortName).width <= 356) break
+      px -= 2
+    } while (px > 12)
+    ctx.fillText(prod.shortName, 14, 44)
+
+    ctx.fillStyle = '#d62828'
+    ctx.font = 'bold 46px sans-serif'
+    ctx.fillText(`${prod.price.toLocaleString('vi-VN')}đ`, 14, 94)
+
+    ctx.fillStyle = '#495057'
+    ctx.font = '26px sans-serif'
+    ctx.textAlign = 'right'
+    ctx.fillText(prod.icon || '', 366, 94)
+  })
+}
+
+/** Toàn bộ bảng giá, suy thẳng từ bố cục hàng hoá nên không bao giờ lệch với kệ. */
+function ShelfPriceTags() {
+  return SHELF_TAGS.map((tag, i) => {
+    const map = priceTagTexture(tag.type)
+    if (!map) return null
+    return (
+      <mesh key={i} position={tag.position}>
+        <planeGeometry args={[0.44, 0.15]} />
+        <meshBasicMaterial map={map} toneMapped={false} />
+      </mesh>
+    )
+  })
+}
 
 function ShelfRack({ width, height, depth, label = '' }) {
   return (
@@ -541,12 +599,21 @@ function ShelfRack({ width, height, depth, label = '' }) {
         <meshStandardMaterial color="#6c757d" metalness={0.5} />
       </mesh>
 
-      {/* Bảng tên đề mục kệ hàng rực rỡ */}
+      {/* Bảng tên đề mục kệ hàng. Trước đây chỉ là tấm bảng đỏ trơn: prop `label` được
+          truyền vào nhưng không hề được vẽ ra, nên đứng giữa siêu thị không biết dãy
+          nào bán gì. Chữ nằm trên một tấm phẳng riêng ở mặt trước, vì texture dán lên
+          khối hộp thì bò ra cả 6 mặt và bị kéo méo theo tỉ lệ từng mặt. */}
       {label && (
-        <mesh position={[0, height + 0.35, 0]}>
-          <boxGeometry args={[width * 0.85, 0.48, 0.1]} />
-          <meshStandardMaterial color="#d62828" roughness={0.3} />
-        </mesh>
+        <group position={[0, height + 0.35, 0]}>
+          <mesh>
+            <boxGeometry args={[width * 0.85, 0.48, 0.1]} />
+            <meshStandardMaterial color="#d62828" roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 0, 0.06]}>
+            <planeGeometry args={[width * 0.82, 0.44]} />
+            <meshBasicMaterial map={shelfSignTexture(label)} toneMapped={false} />
+          </mesh>
+        </group>
       )}
     </group>
   )

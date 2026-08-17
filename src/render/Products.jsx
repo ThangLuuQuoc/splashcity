@@ -11,65 +11,29 @@
 
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { getCanvasTexture, getMaterial } from './assets.js'
+import { getMaterial } from './assets.js'
+import { packagingTexture } from './packaging.js'
 import { PRODUCT_PARTS, resolvePart, buildBuckets } from './productParts.js'
 
 export { PRODUCT_TYPES } from './productParts.js'
-
-// --- nhãn bao bì -----------------------------------------------------------
-
-const LABELS = {
-  ps: ['P/S DÂU', '#d90429', '#ffffff', '🍓 Trẻ Em'],
-  oreo: ['OREO', '#003049', '#ffffff', 'Vanilla Cream'],
-  lays: ["Lay's", '#fcbf49', '#d62828', 'Classic 🥔'],
-  pringles: ['PRINGLES', '#d00000', '#ffffff', 'Original'],
-  feastables: ['FEASTABLES', '#00b4d8', '#ffffff', '⚡ MrBeast'],
-  meiji: ['MEIJI', '#4a2810', '#ffd166', 'Milk Choco'],
-}
-
-function drawLabel(ctx, label, bgColor, textColor, subText) {
-  // Nền
-  ctx.fillStyle = bgColor
-  ctx.fillRect(0, 0, 256, 256)
-
-  // Viền trang trí
-  ctx.lineWidth = 10
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
-  ctx.strokeRect(10, 10, 236, 236)
-
-  // Chữ chính
-  ctx.fillStyle = textColor
-  ctx.font = 'bold 36px sans-serif'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(label, 128, 110)
-
-  // Chữ phụ
-  if (subText) {
-    ctx.font = 'bold 22px sans-serif'
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
-    ctx.fillText(subText, 128, 160)
-  }
-}
-
-/** Nhãn bao bì, dựng một lần cho cả phiên chơi (trước đây là 6 nhãn / mỗi viên hàng). */
-function labelTexture(name) {
-  const [label, bg, fg, sub] = LABELS[name]
-  return getCanvasTexture(`label:${name}`, 256, 256, (ctx) => drawLabel(ctx, label, bg, fg, sub))
-}
 
 // --- bảng vật liệu ---------------------------------------------------------
 // Chỉ chứa tham số KHÔNG phải màu. Màu nằm ở từng bộ phận: bản dựng lẻ nung màu
 // vào material, bản instanced đẩy màu vào instanceColor để nhiều màu khác nhau vẫn
 // dùng chung một material - và chung một draw call.
+//
+// `pack` trỏ tới hình bao bì trong packaging.js. Mọi bộ phận dùng bề mặt có bao bì
+// BẮT BUỘC để màu trắng, nếu không instanceColor sẽ nhân vào và làm bẩn hình in.
 
 const SURFACES = {
-  ps: { label: 'ps' },
-  oreo: { label: 'oreo' },
-  lays: { label: 'lays' },
-  pringles: { label: 'pringles' },
-  feastables: { label: 'feastables' },
-  meiji: { label: 'meiji' },
+  ps: { pack: 'ps' },
+  oreo: { pack: 'oreo' },
+  lays: { pack: 'lays' },
+  pringles: { pack: 'pringles' },
+  feastables: { pack: 'feastables' },
+  meiji: { pack: 'meiji' },
+  kitkat: { pack: 'kitkat' },
+  sting: { pack: 'sting' },
   matte: {},
   soft: { roughness: 0.4 },
   glossy: { roughness: 0.3 },
@@ -78,7 +42,11 @@ const SURFACES = {
 function surfaceParams(name) {
   const surface = SURFACES[name]
   const params = {}
-  if (surface.label) params.map = labelTexture(surface.label)
+  if (surface.pack) {
+    params.map = packagingTexture(surface.pack)
+    // Bao bì đã vẽ sẵn sáng tối vào hình, để bề mặt bóng nữa là loá mất chữ.
+    params.roughness = 0.75
+  }
   if (surface.roughness !== undefined) params.roughness = surface.roughness
   return params
 }

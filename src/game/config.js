@@ -263,6 +263,7 @@ export const HELI = {
   landSpeed: 3.0, // hạ nhanh hơn mức này thì chưa cho xuống máy bay
   rotorSpin: 26, // rad mỗi giây khi động cơ chạy
   tiltMax: 0.28, // độ nghiêng thân khi tăng tốc / vào cua, chỉ để nhìn cho đẹp
+  dryOnGround: 0.5, // đáp xuống đất thì nước trên cánh quạt khô nhanh hơn hẳn
 
   // Chế độ bay tự động ngắm cảnh: máy bay tự vòng quanh từng khu vực đặc biệt.
   tour: {
@@ -276,6 +277,71 @@ export const HELI = {
     steerLerp: 1.8, // độ mượt khi đổi hướng bay
     cameraLerp: 0.8, // camera tự nhìn theo, nhưng nhẹ tay để người chơi vẫn kéo được
   },
+}
+
+// Trực thăng cảnh sát: đội bay truy bắt khi người chơi trốn lên trời.
+//
+// Ba con số phải luôn nhỏ hơn của HELI (maxSpeed, climbRate) - nếu không thì bay
+// thẳng cũng không bao giờ cắt được đuôi và người chơi mất hẳn đường thoát.
+export const POLICE_HELI = {
+  count: 2,
+  // 2 sao là lúc xe tuần tra đã bám sát, nên đó cũng là lúc người chơi nhảy lên trực
+  // thăng để cắt đuôi - phải có đội bay ở đó thì đường không mới không còn là chỗ trốn
+  // miễn phí. Chỉ 1 sao thì vẫn được bay ngắm cảnh yên thân.
+  minStars: 2,
+  spawnDelay: 3.5, // giãn cách giữa hai chiếc
+  spawnMin: 150, // xuất phát ngoài tầm mắt...
+  spawnMax: 190, // ...nhưng đủ gần để cuộc rượt bắt đầu trước khi máu truy nã nguội
+  spawnAltitude: 60,
+  airborneY: 12, // cao hơn mức này thì coi như người chơi đang ở trên không
+
+  // Cùng cái bẫy đã ghi ở HELI.maxSpeed: vận tốc tới hạn là accel/drag, phải lớn hơn
+  // maxSpeed thì trần tốc độ mới có tác dụng.
+  // Thành phố chỉ rộng 420m, nên chênh lệch 4 km/h là vô nghĩa: bay thẳng đến hết bản
+  // đồ cũng không đủ nới ra khỏi tầm nhìn. Chênh 8 (26 so với 34) thì mất khoảng 13
+  // giây bay thẳng để cắt đuôi - vừa đủ căng mà vẫn là một đường thoát có thật.
+  maxSpeed: 26,
+  accel: 44, // accel/drag = 29 > maxSpeed
+  drag: 1.5,
+  climbRate: 12,
+  steerLerp: 1.6, // độ mượt khi đổi hướng bay
+  yawLerp: 2.2, // độ nhanh mũi máy bay quay về phía người chơi
+  leadTime: 1.1, // dự đoán vị trí người chơi để cắt góc thay vì bám đuôi
+  // Cự ly treo (8 ngang + 5 cao, cộng độ trễ lái) ổn định ở khoảng 11m. Mọi ngưỡng bên
+  // dưới phải rộng hơn con số đó, nếu không thì vòi rồng và lệnh bắt không bao giờ nổ.
+  hoverRange: 8, // vào tới đây thì vòng quanh mục tiêu chứ không đâm thẳng vào
+  hoverAbove: 5, // treo cao hơn người chơi chừng này, đèn pha mới chiếu xuống được
+  minAltitude: 22, // thấp hơn nóc nhà cao nhất: bay luồn giữa các toà vẫn là chỗ trốn
+  bodyRadius: 3.0,
+
+  // Ba vòng cảnh báo tăng dần: thấy -> khoá đèn pha -> phun vòi rồng.
+  sightRange: 90,
+  spotRange: 26,
+  cannonRange: 14,
+
+  // Đèn pha khoá xong phải giữ được mục tiêu chừng này giây mới bắt đầu phun vòi rồng.
+  // Đây là quãng để người chơi kịp hiểu chuyện gì đang xảy ra và bẻ lái chạy.
+  lockDelay: 4,
+  soakPerSec: 0.16, // ướt từ 0 đến 1 trong hơn 6 giây, bất kể mấy chiếc đang chĩa vòi vào
+  soakDrain: 0.3, // thoát khỏi tia nước thì khô nhanh hơn hẳn lúc bị phun
+  liftPenalty: 0.75, // ướt hết thì chỉ còn 25% sức leo
+  speedPenalty: 0.25, // ...và bay chậm hơn 25%
+  ceilingPenalty: 0.6, // trần bay bị ép tụt, buộc phải hạ cánh
+  sinkRate: 0.5, // tốc độ bị dìm xuống, tính theo HELI.climbRate
+
+  bustRange: 12, // chỉ bắt trên không khi máy bay đã ướt sũng
+  bustTime: 5.0, // và vẫn phải giữ được ngần này giây - vẫn còn đường vùng ra
+
+  // Thành phố chỉ rộng 420m nên không thể bay thẳng mãi để cắt đuôi. Không có nhịp nghỉ
+  // thì đội bay thành một bản án chung thân: hết dầu là phải về, rồi mới có tốp khác.
+  maxChase: 45, // giây bám liên tục trước khi phải về tiếp dầu
+  regroupDelay: 25, // và chừng này giây nữa mới có chiếc tiếp theo cất cánh
+  soakedRecoil: 8, // giây phải lùi ra sau khi ăn một quả bóng nước
+  recoilRange: 2.2, // lùi ra xa gấp chừng này lần hoverRange
+  loseRange: 220,
+  giveUpTime: 6, // mất dấu lâu hơn mức này thì rút
+  leaveTime: 5, // thời gian bay lên cao rút lui trước khi biến mất
+  rotorSpin: 30,
 }
 
 // Tự động chạy tới khu vực đã chọn trên bản đồ

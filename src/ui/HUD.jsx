@@ -111,7 +111,7 @@ function QuickInventory({ world }) {
             key={idx}
             className="inv-slot-btn"
             onClick={() => world && useInventoryItem(world, item.id)}
-            title={`${item.name} (${item.desc})`}
+            title={item.desc ? `${item.name} — ${item.desc}` : item.name}
           >
             <span className="slot-key">[{idx + 1}]</span>
             <span className="slot-icon">{item.icon}</span>
@@ -167,21 +167,41 @@ function FlightBadge({ world }) {
         speed: Math.round(Math.hypot(h.vx, h.vz) * 3.6), // km/h cho dễ hình dung
         tour: stop ? `${stop.icon} ${stop.name}` : null,
         orbiting: h.tour.active && h.tour.phase === 'orbit',
+        // Đang bị đội bay cảnh sát bám: cảnh báo phải đọc được ngay trên đồng hồ bay,
+        // vì dòng prompt dưới đáy màn hình bị updatePrompt ghi đè mỗi frame.
+        alert: world.copHeliAlert,
+        wet: Math.round(h.soaked * 100),
       })
     }, 200)
     return () => clearInterval(id)
   }, [world])
 
   if (!flight) return null
+
+  // Cảnh báo truy bắt lấn át mọi thông tin khác: lúc bị đèn pha khoá thì tên khu vực
+  // đang ngắm cảnh không còn là thứ người chơi cần đọc nữa.
+  const alertKey = {
+    scramble: 'heli.scramble',
+    chase: 'heli.chased',
+    spot: 'heli.spotted',
+    cannon: 'heli.soaking',
+  }[flight.alert]
+  const hunted = !!alertKey && !flight.landed
+
   return (
-    <div className={`hud-panel hud-flight ${flight.landed ? 'landed' : ''} ${flight.tour ? 'touring' : ''}`}>
-      <span className="flight-icon">{flight.tour ? '🛩️' : '🚁'}</span>
+    <div className={`hud-panel hud-flight ${flight.landed ? 'landed' : ''} ${flight.tour ? 'touring' : ''} ${hunted ? 'hunted' : ''}`}>
+      <span className="flight-icon">{hunted ? '🚨' : flight.tour ? '🛩️' : '🚁'}</span>
       <span className="flight-alt">{flight.alt}<small>m</small></span>
       <span className="flight-speed">{flight.speed}<small>km/h</small></span>
+      {flight.wet > 0 && (
+        <span className="flight-wet">💦 {t('heli.wet')} {flight.wet}<small>%</small></span>
+      )}
       <span className="flight-state">
-        {flight.tour
-          ? t(flight.orbiting ? 'flight.orbiting' : 'flight.goingTo', { place: flight.tour })
-          : t(flight.landed ? 'flight.landed' : 'flight.flying')}
+        {hunted
+          ? t(alertKey)
+          : flight.tour
+            ? t(flight.orbiting ? 'flight.orbiting' : 'flight.goingTo', { place: flight.tour })
+            : t(flight.landed ? 'flight.landed' : 'flight.flying')}
       </span>
     </div>
   )

@@ -1,4 +1,8 @@
 import { playItemUse, playBananaSlip, playThrow, playFruitThud, playPickup } from '../audio.js'
+// useInventoryItem đặt lời nhắc cho HUD bằng t(), nhưng file này chưa bao giờ nhập nó
+// vào: bấm phím 1-4 để dùng đồ là ném ReferenceError ngay giữa useFrame, và vòng lặp
+// dựng hình của r3f đứng luôn - đúng hiện tượng "bấm dùng đồ xong game treo".
+import { t } from '../i18n.js'
 
 let lastProcessedScore = 0
 let cashGrantTimer = 0

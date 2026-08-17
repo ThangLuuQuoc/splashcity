@@ -8,6 +8,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getCanvasTexture, getMaterial } from './assets.js'
+import HeliBody from './HeliBody.jsx'
 
 function bodyMaterial() {
   return getMaterial('heli:body', () => new THREE.MeshStandardMaterial({ color: '#ef233c', roughness: 0.35, metalness: 0.3 }))
@@ -97,56 +98,14 @@ export default function Helicopter({ world }) {
 
       {/* Thân trực thăng */}
       <group ref={bodyRef}>
-        {/* Khoang chính */}
-        <mesh position={[0, 1.5, 0]} material={bodyMaterial()}>
-          <capsuleGeometry args={[1.25, 2.2, 6, 12]} />
-        </mesh>
-        {/* Kính buồng lái phía trước */}
-        <mesh position={[0, 1.65, 1.6]} material={glassMaterial()}>
-          <sphereGeometry args={[1.05, 14, 12]} />
-        </mesh>
-        {/* Đuôi */}
-        <mesh position={[0, 1.75, -3.1]} rotation={[Math.PI / 2, 0, 0]} material={bodyMaterial()}>
-          <cylinderGeometry args={[0.28, 0.5, 3.4, 10]} />
-        </mesh>
-        {/* Vây đuôi thẳng đứng */}
-        <mesh position={[0, 2.55, -4.5]} material={bodyMaterial()}>
-          <boxGeometry args={[0.16, 1.5, 1.0]} />
-        </mesh>
-        {/* Càng đáp */}
-        {[-1, 1].map((side) => (
-          <group key={side}>
-            <mesh position={[side * 1.0, 0.18, 0]} material={metalMaterial()}>
-              <boxGeometry args={[0.18, 0.18, 3.6]} />
-            </mesh>
-            <mesh position={[side * 0.75, 0.75, 0.7]} rotation={[0, 0, side * 0.5]} material={metalMaterial()}>
-              <boxGeometry args={[0.14, 1.3, 0.14]} />
-            </mesh>
-            <mesh position={[side * 0.75, 0.75, -0.7]} rotation={[0, 0, side * 0.5]} material={metalMaterial()}>
-              <boxGeometry args={[0.14, 1.3, 0.14]} />
-            </mesh>
-          </group>
-        ))}
-        {/* Trục cánh quạt */}
-        <mesh position={[0, 2.85, 0]} material={darkMaterial()}>
-          <cylinderGeometry args={[0.2, 0.2, 0.7, 8]} />
-        </mesh>
-        {/* Cánh quạt chính */}
-        <group ref={rotorRef} position={[0, 3.2, 0]}>
-          {[0, 1, 2, 3].map((i) => (
-            <mesh key={i} rotation={[0, (i * Math.PI) / 2, 0]} position={[0, 0, 0]} material={darkMaterial()}>
-              <boxGeometry args={[0.34, 0.07, 11]} />
-            </mesh>
-          ))}
-        </group>
-        {/* Cánh quạt đuôi */}
-        <group ref={tailRotorRef} position={[0.35, 2.4, -4.5]}>
-          {[0, 1].map((i) => (
-            <mesh key={i} rotation={[(i * Math.PI) / 2, 0, 0]} material={darkMaterial()}>
-              <boxGeometry args={[0.06, 2.2, 0.22]} />
-            </mesh>
-          ))}
-        </group>
+        <HeliBody
+          body={bodyMaterial()}
+          dark={darkMaterial()}
+          glass={glassMaterial()}
+          metal={metalMaterial()}
+          rotorRef={rotorRef}
+          tailRotorRef={tailRotorRef}
+        />
       </group>
     </>
   )

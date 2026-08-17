@@ -13,6 +13,7 @@ import { PALETTE } from './game/config.js'
 import City from './render/City.jsx'
 import Cars from './render/Cars.jsx'
 import Helicopter from './render/Helicopter.jsx'
+import PoliceHelicopters from './render/PoliceHelicopters.jsx'
 import Pedestrians from './render/Pedestrians.jsx'
 import Player from './render/Player.jsx'
 import Props from './render/Props.jsx'
@@ -50,6 +51,7 @@ function Scene({ world }) {
           <Rail world={world} />
           <Cars world={world} />
           <Helicopter world={world} />
+          <PoliceHelicopters world={world} />
           <Pedestrians world={world} />
           <Trains world={world} />
           <Precipitation world={world} />

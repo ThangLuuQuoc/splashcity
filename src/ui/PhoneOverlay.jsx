@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../game/store.js'
 import { t } from '../game/i18n.js'
 import { checkoutCart } from '../game/systems/interiors.js'
@@ -17,9 +18,24 @@ export default function PhoneOverlay({ world }) {
   const armed = useArmed(phoneOpen)
   useGame((s) => s.lang) // đổi ngôn ngữ là điện thoại vẽ lại
 
+  const [scanning, setScanning] = useState(false)
+  const timers = useRef([])
+
+  // Đóng điện thoại giữa lúc đang quét thì huỷ luôn nhịp quét, nếu không lần mở sau sẽ
+  // bị trừ tiền bởi cái hẹn giờ của lần trước.
+  useEffect(() => {
+    if (phoneOpen) return
+    timers.current.forEach(clearTimeout)
+    timers.current = []
+    setScanning(false)
+  }, [phoneOpen])
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), [])
+
   if (!phoneOpen) return null
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.count, 0)
+  const checkout = interior === 'supermarket' && cart.length > 0
 
   const closePhone = () => {
     if (world) world.phoneOpen = false
@@ -32,21 +48,26 @@ export default function PhoneOverlay({ world }) {
     if (armed) closePhone()
   }
 
+  // Bấm là quét: một nhịp quét ngắn ngay trong nút rồi trừ tiền. Giữ được cảm giác
+  // "chạm điện thoại vào mã QR ở quầy" mà không phải nuôi một khung camera giả to đùng
+  // chiếm mất chỗ của hoá đơn.
   const handlePay = () => {
-    if (!armed) return
-    if (world) {
+    if (!armed || scanning || !world) return
+    setScanning(true)
+    timers.current.push(setTimeout(() => {
+      setScanning(false)
       const res = checkoutCart(world)
       if (res && res.success) {
         world.prompt = t('phone.paid')
-        setTimeout(() => {
+        timers.current.push(setTimeout(() => {
           if (world) world.phoneOpen = false
           setPhoneOpen(false)
-        }, 500)
+        }, 500))
       } else {
         playBeep()
         if (res && res.reason) world.prompt = res.reason
       }
-    }
+    }, 650))
   }
 
   const handleUse = (itemId) => {
@@ -83,18 +104,14 @@ export default function PhoneOverlay({ world }) {
             </div>
           </div>
 
-          {/* Nội dung chính: Camera quét QR hoặc Túi đồ */}
-          <div className="phone-body">
-            {interior === 'supermarket' && cart.length > 0 ? (
-              <div className="phone-qr-scanner-box">
-                <div className="phone-scanner-frame">
-                  <div className="scanner-line"></div>
-                  <div className="scanner-target-qr">
-                    <span className="qr-box-icon">📷</span>
-                    <span>{t('phone.scanning')}</span>
-                  </div>
-                </div>
-
+          {/* Nội dung chính: Hoá đơn quầy tính tiền hoặc Túi đồ */}
+          <div className={`phone-body${checkout ? ' checkout' : ''}`}>
+            {checkout ? (
+              <div className="phone-checkout">
+                {/* Hoá đơn lên trên cùng: đây mới là thứ người chơi cần đọc. Khung quét
+                    QR to đùng trước đây chiếm 140px phía trên, đẩy cả danh sách hàng lẫn
+                    nút trả tiền xuống dưới mép màn hình. Việc quét giờ nằm gọn trong
+                    chính cái nút, chỉ hiện lúc đang quét. */}
                 <div className="phone-cart-list">
                   <h4>{t('phone.cart', { count: cart.length })}</h4>
                   {cart.map((item, idx) => (
@@ -103,18 +120,21 @@ export default function PhoneOverlay({ world }) {
                       <span className="item-price">{(item.price * item.count).toLocaleString('vi-VN')} đ</span>
                     </div>
                   ))}
-                  <div className="phone-cart-total">
-                    <span>{t('phone.total')}</span>
-                    <span className="total-amount">{cartTotal.toLocaleString('vi-VN')} đ</span>
-                  </div>
                 </div>
 
-                <button 
-                  className={`phone-pay-btn ${cash >= cartTotal ? 'active' : 'disabled'}`}
+                {/* Tổng tiền nằm ngoài danh sách để giỏ hàng dài mấy cũng không cuộn mất */}
+                <div className="phone-cart-total">
+                  <span>{t('phone.total')}</span>
+                  <span className="total-amount">{cartTotal.toLocaleString('vi-VN')} đ</span>
+                </div>
+
+                <button
+                  className={`phone-pay-btn ${scanning ? 'scanning' : cash >= cartTotal ? 'active' : 'disabled'}`}
                   onClick={handlePay}
-                  disabled={cash < cartTotal}
+                  disabled={cash < cartTotal || scanning}
                 >
-                  {t('phone.payNow')}
+                  {scanning && <span className="pay-scan-strip" />}
+                  {scanning ? t('phone.scanning') : t('phone.payNow')}
                 </button>
               </div>
             ) : (

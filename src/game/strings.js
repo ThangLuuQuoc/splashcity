@@ -116,7 +116,8 @@ export const STRINGS = {
   // --- điện thoại ---------------------------------------------------------
   'phone.brand': { vi: '📱 SplashPhone 15 Pro', en: '📱 SplashPhone 15 Pro' },
   'phone.payReady': { vi: '● Sẵn sàng quét mã QR thanh toán', en: '● Ready to scan a QR code' },
-  'phone.scanning': { vi: 'ĐANG QUÉT MÃ QR TẠI QUẦY...', en: 'SCANNING THE QR CODE...' },
+  // Giờ là chữ chạy trên chính nút thanh toán trong lúc quét, nên phải ngắn gọn
+  'phone.scanning': { vi: '📷 ĐANG QUÉT MÃ QR...', en: '📷 SCANNING...' },
   'phone.cart': { vi: '🛒 Giỏ hàng ({count} món):', en: '🛒 Cart ({count} items):' },
   'phone.total': { vi: 'Tổng thanh toán:', en: 'Total:' },
   'phone.payNow': { vi: '⚡ QUÉT MÃ QR THANH TOÁN NGAY', en: '⚡ SCAN THE QR CODE TO PAY' },
@@ -205,6 +206,13 @@ export const STRINGS = {
   'heli.exited': { vi: 'Đã xuống trực thăng', en: 'Out of the helicopter' },
   'heli.landFirst': { vi: 'Hạ cánh xuống đất trước khi ra khỏi trực thăng!', en: 'Land before getting out of the helicopter!' },
   'heli.tourOff': { vi: 'Đã tắt bay tự động - giữ 🔽 để hạ cánh', en: 'Autopilot off - hold 🔽 to land' },
+
+  // --- bị trực thăng cảnh sát truy bắt ------------------------------------
+  'heli.scramble': { vi: '🚁 Trực thăng cảnh sát đã cất cánh!', en: '🚁 Police helicopter scrambled!' },
+  'heli.chased': { vi: '🚁 Trực thăng cảnh sát đang bám theo', en: '🚁 Police helicopter on your tail' },
+  'heli.spotted': { vi: '🔦 Đèn pha đã khoá - bay đi ngay!', en: '🔦 Searchlight locked on - fly!' },
+  'heli.soaking': { vi: '💦 Cánh quạt ướt sũng - phải hạ cánh!', en: '💦 Rotors soaked - you have to land!' },
+  'heli.wet': { vi: 'Ướt', en: 'Wet' },
 
   // --- thanh toán & buff --------------------------------------------------
   'cart.empty': { vi: 'Giỏ hàng trống!', en: 'Your cart is empty!' },

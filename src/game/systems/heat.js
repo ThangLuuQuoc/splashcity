@@ -1,4 +1,4 @@
-import { HEAT } from '../config.js'
+import { HEAT, POLICE_HELI } from '../config.js'
 import { hasLineOfSight } from '../collision.js'
 import { visibilityFactor } from './weather.js'
 import { playStar } from '../audio.js'
@@ -51,6 +51,19 @@ export function policeCanSee(world) {
     const d = Math.hypot(cop.x - p.x, cop.z - p.z)
     if (d < HEAT.copCloseRange) return true
     if (d < sight * 0.6 && hasLineOfSight(world.bp, cop.x, cop.z, p.x, p.z)) return true
+  }
+
+  // Trực thăng cảnh sát nhìn xa hơn nhiều, và khi người chơi đang ở trên không thì
+  // không toà nhà nào chắn được tia nhìn - đó chính là lý do đội bay tồn tại. Xuống
+  // tới mặt đất rồi thì lại phải có đường nhìn thông như cảnh sát thường.
+  const heliSight = POLICE_HELI.sightRange * visibilityFactor(world)
+  for (let i = 0; i < world.policeHelis.length; i++) {
+    const h = world.policeHelis[i]
+    if (!h.active || h.state !== 'chase') continue
+    const d = Math.hypot(h.x - p.x, h.y - p.y, h.z - p.z)
+    if (d > heliSight) continue
+    if (p.y > POLICE_HELI.airborneY) return true
+    if (hasLineOfSight(world.bp, h.x, h.z, p.x, p.z)) return true
   }
   return false
 }

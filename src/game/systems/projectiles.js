@@ -1,4 +1,4 @@
-import { ACTIONS, HEAT, SCORE, CAR, WEATHER } from '../config.js'
+import { ACTIONS, HEAT, SCORE, CAR, WEATHER, POLICE_HELI } from '../config.js'
 import { nearbyBoxes } from '../collision.js'
 import { addHeat } from './heat.js'
 import { scarePed } from './pedestrians.js'
@@ -119,6 +119,9 @@ export function updateProjectiles(world, dt) {
 
     let hit = false
     let hx = nx, hy = ny, hz = nz
+    // Trực thăng cảnh sát xử lý riêng: applySplash chỉ tính bán kính phẳng, mà mục tiêu
+    // này thì nằm cách mặt đất mấy chục mét.
+    let hitHeli = null
 
     if (ny <= 0.15) {
       hit = true
@@ -161,13 +164,37 @@ export function updateProjectiles(world, dt) {
         const dz = cop.z - nz
         if (dx * dx + dz * dz < (0.65 + r) * (0.65 + r)) hit = true
       }
+      // Bán kính rộng tay hơn hẳn: ném trúng một mục tiêu đang bay vòng quanh mình ở
+      // 20m là việc khó, mà đây lại là đường phản đòn duy nhất khi đang bị vòi rồng dí.
+      for (let j = 0; j < world.policeHelis.length && !hit; j++) {
+        const ph = world.policeHelis[j]
+        if (!ph.active || ph.soaked > 0) continue
+        const dx = ph.x - nx
+        const dy = ph.y + 1.6 - ny
+        const dz = ph.z - nz
+        const reach = POLICE_HELI.bodyRadius + 1.2 + r
+        if (dx * dx + dy * dy + dz * dz < reach * reach) {
+          hit = true
+          hitHeli = ph
+        }
+      }
     }
 
     if (hit || b.life > 5) {
       b.active = false
       if (hit) {
         spawnSplash(world, hx, hy + 0.2, hz, b.isMega)
-        applySplash(world, hx, hz, true, b.isMega)
+        if (hitHeli) {
+          // Kính buồng lái nhoè nước: phi công phải lùi ra lau, ngừng phun vòi rồng.
+          hitHeli.soaked = POLICE_HELI.soakedRecoil * (b.isMega ? 1.6 : 1)
+          hitHeli.cannonOn = false
+          hitHeli.spotOn = false
+          world.score += b.isMega ? SCORE.splashCop * 2 : SCORE.splashCop
+          world.stats.splashed++
+          addHeat(world, HEAT.splashCop)
+        } else {
+          applySplash(world, hx, hz, true, b.isMega)
+        }
       }
       continue
     }

@@ -184,6 +184,28 @@ export default function Minimap({ world }) {
 
       // Cops.
       const flash = Math.floor(world.time * 6) % 2 === 0
+
+      // Trực thăng cảnh sát: cùng nhịp nhấp nháy với xe tuần tra, nhưng vẽ thêm cánh
+      // quạt quay để phân biệt với một chiếc xe đang đứng yên trên phố.
+      for (const ph of world.policeHelis || []) {
+        if (!ph.active) continue
+        const px = toX(ph.x)
+        const py = toY(ph.z)
+        ctx.strokeStyle = flash ? '#ff3355' : '#3f7bff'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.arc(px, py, 4.5, 0, Math.PI * 2)
+        ctx.stroke()
+        const blade = world.time * 10
+        ctx.beginPath()
+        for (let i = 0; i < 2; i++) {
+          const a = blade + (i * Math.PI) / 2
+          ctx.moveTo(px - Math.cos(a) * 6, py - Math.sin(a) * 6)
+          ctx.lineTo(px + Math.cos(a) * 6, py + Math.sin(a) * 6)
+        }
+        ctx.stroke()
+      }
+
       ctx.fillStyle = flash ? '#ff3355' : '#3f7bff'
       for (const cop of world.police) {
         if (!cop.active) continue

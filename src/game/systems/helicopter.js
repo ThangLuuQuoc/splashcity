@@ -7,7 +7,7 @@
 // Va chạm với toà nhà dùng lại `resolveStatic` của thế giới mở: nó vốn đã bỏ qua các
 // hộp thấp hơn cao độ truyền vào, nên bay cao hơn nóc nhà là tự do bay qua.
 
-import { HELI } from '../config.js'
+import { HELI, POLICE_HELI } from '../config.js'
 import { resolveStatic } from '../collision.js'
 import { CITY } from '../config.js'
 import { axisForward, axisRight, keyDown, uiCaptured } from './input.js'
@@ -27,6 +27,9 @@ export function createHelicopter(city) {
     tiltPitch: 0,
     tiltRoll: 0,
     landed: true,
+    // Vòi rồng của trực thăng cảnh sát làm ướt cánh quạt: 0 = khô, 1 = ướt sũng.
+    soaked: 0,
+    sprayed: 0, // còn đang bị phun trong bao nhiêu giây nữa (policeHeli.js ghi vào)
     // Bay tự động ngắm cảnh
     tour: {
       active: false,
@@ -210,6 +213,9 @@ export function exitHelicopter(world) {
   h.vx = 0
   h.vz = 0
   h.vy = 0
+  // Đáp được xuống đất giữa lúc bị vòi rồng dí là đã thoát rồi - cánh quạt coi như khô.
+  h.soaked = 0
+  h.sprayed = 0
   h.tour.active = false // ra khỏi máy bay thì tour cũng dừng
 }
 
@@ -228,6 +234,15 @@ export function updateHelicopter(world, dt, exitPressed) {
   const wantDown = !blocked && (keyDown('ShiftLeft') || keyDown('ShiftRight') || keyDown('KeyC'))
 
   h.rotor += HELI.rotorSpin * dt
+
+  // Cánh quạt ướt vì vòi rồng cảnh sát: mất dần lực nâng, bay nặng nề hơn, và trần bay
+  // bị ép tụt xuống. Cách này buộc người chơi phải hạ cánh thay vì bị tóm gọn giữa trời
+  // - vẫn còn cả một quãng để xoay xở, mà vẫn thấy rõ là mình đang thua.
+  if (h.sprayed > 0) h.sprayed -= dt
+  else h.soaked = Math.max(0, h.soaked - (h.landed ? HELI.dryOnGround : POLICE_HELI.soakDrain) * dt)
+  const climbRate = HELI.climbRate * (1 - POLICE_HELI.liftPenalty * h.soaked)
+  const maxSpeed = HELI.maxSpeed * (1 - POLICE_HELI.speedPenalty * h.soaked)
+  const ceiling = HELI.maxAltitude * (1 - POLICE_HELI.ceilingPenalty * h.soaked)
 
   // Người chơi chạm vào cần hoặc nút cao độ là nhường tay lái ngay - cùng hợp đồng với
   // chế độ tự động chạy dưới đường: không bao giờ giành lái với người đang chơi.
@@ -253,16 +268,21 @@ export function updateHelicopter(world, dt, exitPressed) {
 
     // Lên / xuống. Không giữ phím thì máy bay treo tại chỗ - dễ ngắm cảnh hơn nhiều so
     // với việc bắt trẻ con giữ ga liên tục.
-    if (wantUp) h.vy = HELI.climbRate
+    // Đi xuống vẫn ở tốc độ đầy đủ kể cả khi ướt: hạ cánh là đường thoát, không được
+    // biến nó thành thứ khó nhằn thêm.
+    if (wantUp) h.vy = climbRate
     else if (wantDown) h.vy = -HELI.climbRate
     else h.vy *= Math.max(0, 1 - HELI.climbDamp * dt)
   }
 
+  // Ướt quá thì bị dìm xuống dưới trần bay mới, từ từ chứ không giật cục.
+  if (h.y > ceiling) h.vy = Math.min(h.vy, -HELI.climbRate * POLICE_HELI.sinkRate)
+
   // Trần tốc độ áp cho cả hai chế độ.
   const speed = Math.hypot(h.vx, h.vz)
-  if (speed > HELI.maxSpeed) {
-    h.vx = (h.vx / speed) * HELI.maxSpeed
-    h.vz = (h.vz / speed) * HELI.maxSpeed
+  if (speed > maxSpeed) {
+    h.vx = (h.vx / speed) * maxSpeed
+    h.vz = (h.vz / speed) * maxSpeed
   }
 
   h.x += h.vx * dt
@@ -300,8 +320,14 @@ export function updateHelicopter(world, dt, exitPressed) {
   // Không cho bay ra ngoài tường biên thành phố. Dùng đúng công thức city.js dựng
   // tường (HALF + RW/2), vì bay cao hơn tường thì resolveStatic bỏ qua tường.
   const edge = CITY.half + CITY.roadWidth / 2
-  h.x = Math.max(-edge, Math.min(edge, h.x))
-  h.z = Math.max(-edge, Math.min(edge, h.z))
+  const clampX = Math.max(-edge, Math.min(edge, h.x))
+  const clampZ = Math.max(-edge, Math.min(edge, h.z))
+  // Chạm tường thì phải triệt luôn vận tốc đâm vào tường, không chỉ kẹp toạ độ: nếu
+  // không thì máy bay đứng chết một chỗ trong khi đồng hồ vẫn báo 122 km/h, và người
+  // chơi bị dí vào góc bản đồ mà không hiểu vì sao mình không nhúc nhích. Thành phần
+  // vận tốc dọc theo tường được giữ nguyên, nên bay men theo biên vẫn là đường thoát.
+  if (clampX !== h.x) { h.x = clampX; h.vx = 0 }
+  if (clampZ !== h.z) { h.z = clampZ; h.vz = 0 }
 
   // Va chạm với toà nhà cao hơn cao độ hiện tại.
   const hit = resolveStatic(world.bp, h, HELI.bodyRadius, h.y)

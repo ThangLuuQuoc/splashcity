@@ -95,6 +95,22 @@ export function taperedCylinder(radiusTop, radiusBottom, height, segments = 8) {
   return getGeometry(key, () => new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments))
 }
 
+/**
+ * Một khúc cung tròn tiết diện tròn - dùng dựng những vật cong như quả chuối.
+ *
+ * Cung luôn quét từ góc 0 nên hình lệch hẳn sang một bên; xoay sẵn -arc/2 quanh trục Z
+ * ngay trong geometry để tâm cung nằm giữa, nhờ vậy chỗ đặt vật phẩm chỉ việc lo vị trí
+ * chứ không phải bù trừ hình học.
+ */
+export function torusArc(radius, tube, arc, radialSeg = 6, tubularSeg = 12) {
+  const key = `torus:${radius}:${tube}:${arc}:${radialSeg}:${tubularSeg}`
+  return getGeometry(key, () => {
+    const geo = new THREE.TorusGeometry(radius, tube, radialSeg, tubularSeg, arc)
+    geo.rotateZ(-arc / 2)
+    return geo
+  })
+}
+
 /** Số tài nguyên đang cache - dùng khi cần soi hiệu năng trong console. */
 export function assetStats() {
   return { textures: textures.size, materials: materials.size, geometries: geometries.size }

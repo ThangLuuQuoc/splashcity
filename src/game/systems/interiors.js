@@ -391,6 +391,9 @@ export function addToCart(world, product) {
       price: product.price,
       icon: product.icon,
       type: product.type,
+      // Mô tả đi theo món hàng vào tận túi đồ: ô đồ nhanh trên HUD và thẻ vật phẩm
+      // trong điện thoại đều đọc nó, thiếu là hiện thẳng chữ "undefined" cho người chơi.
+      desc: product.desc,
       count: 1,
     })
   }

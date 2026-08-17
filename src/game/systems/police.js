@@ -278,6 +278,14 @@ export function updatePolice(world, dt) {
     }
   }
 
+  // Trực thăng cảnh sát cũng hú còi, và khi đang bay thì nó là thứ duy nhất còn bám
+  // theo - không tính vào đây thì cuộc rượt đuổi trên trời diễn ra trong im lặng.
+  for (let i = 0; i < world.policeHelis.length; i++) {
+    const h = world.policeHelis[i]
+    if (!h.active || h.state !== 'chase') continue
+    nearestDist = Math.min(nearestDist, Math.hypot(h.x - p.x, h.y - p.y, h.z - p.z))
+  }
+
   // Siren volume rises as the nearest cop closes in.
   if (world.stars > 0 && nearestDist < 90) {
     updateSiren(Math.max(0.25, 1 - nearestDist / 90))

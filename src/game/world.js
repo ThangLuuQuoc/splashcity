@@ -7,6 +7,7 @@ import { createWeather } from './systems/weather.js'
 import { createDisaster } from './systems/disasters.js'
 import { createTravel } from './systems/navigation.js'
 import { createHelicopter } from './systems/helicopter.js'
+import { createPoliceHelis, clearPoliceHelis } from './systems/policeHeli.js'
 import { buildLandmarks } from './landmarks.js'
 import { TIME } from './config.js'
 
@@ -204,6 +205,13 @@ export function createWorld() {
       vx: 0, vz: 0, walkPhase: 0, giveUp: 0, soaked: 0,
     })),
 
+    // Đội bay truy bắt khi người chơi trốn lên trời.
+    policeHelis: createPoliceHelis(),
+    copHeliTimer: 0,
+    copHeliAlert: 'none', // none | scramble | chase | spot | cannon
+    copHeliAlertTimer: 0,
+    copHeliDistance: Infinity,
+
     balloons: pool(MAX_BALLOONS, () => ({
       active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, life: 0, isMega: false,
     })),
@@ -277,6 +285,8 @@ export function respawnPlayer(world, atStation = true) {
   world.ammo = ACTIONS.maxAmmo
   for (const c of world.police) c.active = false
   for (const c of world.footCops) c.active = false
+  clearPoliceHelis(world)
+  world.copHeliTimer = 0
 }
 
 export function resetGame(world) {

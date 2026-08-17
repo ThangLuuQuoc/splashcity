@@ -13,6 +13,7 @@ import { resolveVehicleCollisions, updateProps, resolveBananas } from './systems
 import { updateActions, updatePrompt } from './systems/actions.js'
 import { updateProjectiles } from './systems/projectiles.js'
 import { updatePolice, clearPolice } from './systems/police.js'
+import { updatePoliceHelis, clearPoliceHelis } from './systems/policeHeli.js'
 import { updateHeat } from './systems/heat.js'
 import { updateInteriors } from './systems/interiors.js'
 import { updateTravel } from './systems/navigation.js'
@@ -64,6 +65,7 @@ export default function GameLoop({ world }) {
       if (world.bustedTimer >= BUSTED_DURATION) {
         respawnPlayer(world, true)
         clearPolice(world)
+        clearPoliceHelis(world)
         world.phase = 'playing'
         setPhase('playing')
         setBusted(null)
@@ -102,6 +104,9 @@ export default function GameLoop({ world }) {
     if (world.interior === 'none') {
       updateDisasters(world, dt)
       updatePolice(world, dt)
+      // Sau updatePolice để hai hệ dùng chung một trạng thái sao trong cùng một frame,
+      // và trước updateHeat để đèn pha trên trời kịp giữ máu truy nã không nguội.
+      updatePoliceHelis(world, dt)
       updateHeat(world, dt)
     }
     updatePrompt(world)
