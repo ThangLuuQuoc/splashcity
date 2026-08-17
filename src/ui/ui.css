@@ -549,6 +549,51 @@
   .touch-btn.big { width: 90px; height: 90px; }
 }
 
+/* Điện thoại nằm ngang: khung nhìn chỉ còn khoảng 320-380px chiều cao sau khi trừ thanh
+   trình duyệt. Lưới nút luôn 4 hàng (nút Throw chiếm cứng 2 hàng ở cột phải), nên cỡ
+   84px cho ra 4*84 + 3*12 + 22 = 394px - cao hơn cả màn hình, và hàng TRÊN CÙNG bị đẩy
+   ra ngoài. Hàng đó là nút Interact khi đi bộ và nút Land khi đang bay, tức là mất hẳn
+   đường vào siêu thị, đồn cảnh sát và đường xuống trực thăng.
+
+   Thu nhỏ theo bậc để cụm nút luôn nằm trong khung:
+     460px -> 4*66 + 3*9 + 22 = 313px
+     380px -> 4*56 + 3*7 + 22 = 267px  (vẫn vừa cả khung nhìn 290px) */
+@media (max-height: 460px) {
+  .touch-buttons { gap: 9px; }
+  .touch-btn { width: 66px; height: 66px; }
+  .touch-btn.big { width: 80px; height: 80px; }
+  .touch-btn .touch-btn-icon { font-size: 22px; }
+  .touch-btn.big .touch-btn-icon { font-size: 28px; }
+  .touch-btn .touch-btn-label { font-size: 9px; }
+}
+
+@media (max-height: 380px) {
+  .touch-buttons { gap: 7px; }
+  .touch-btn { width: 56px; height: 56px; }
+  .touch-btn.big { width: 68px; height: 68px; }
+  .touch-btn .touch-btn-icon { font-size: 19px; }
+  .touch-btn.big .touch-btn-icon { font-size: 24px; }
+  .touch-btn .touch-btn-label { font-size: 8px; }
+
+  /* Lưới nút lúc này vươn lên tới y = 44, nên panel ngôi sao phải kết thúc trước đó,
+     không thì nó vẽ đè lên góc nút Interact. (Đo được: bottom 54 so với top 44.) */
+  .hud.touch .hud-wanted { padding: 2px 8px; }
+  .hud.touch .hud-wanted .stars { font-size: 16px; letter-spacing: 0; line-height: 1.15; }
+
+  /* Nút thiên tai đặt right: 178px là tính cho tablet rộng; trên màn hình hẹp nó lấn
+     vào dải chip thời tiết và cắn mất một phần vùng chạm của chip đồng hồ (đo được:
+     chồng 64px). Dời xuống ngay dưới dải chip, nơi còn trống. */
+  .hud.touch .disaster-buttons {
+    top: 78px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Đồng hồ bay xuống dưới nút thiên tai, cả hai đều nằm giữa. */
+  .hud.touch .hud-flight { top: 130px; font-size: 14px; }
+}
+
 /* ---- HUD Buff & Inventory --------------------------------------------- */
 
 

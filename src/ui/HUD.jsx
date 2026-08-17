@@ -230,12 +230,26 @@ function TravelBanner({ world }) {
   return null
 }
 
+// Trên điện thoại không có phím nào cả, nên prompt kiểu "[E] Vào Siêu thị" là chỉ vào
+// một phím không tồn tại - người chơi đi tìm nút "E" không thấy và tưởng là thiếu nút.
+// Đổi tên phím thành đúng biểu tượng của nút trong dãy nút cảm ứng để hai thứ khớp nhau.
+const TOUCH_KEY_ICONS = {
+  E: '⚡',
+  P: '📱',
+  M: '🗺️',
+  X: '🛩️',
+}
+
+function withTouchButtons(text) {
+  return text.replace(/\[([EPMX])\]/g, (whole, key) => TOUCH_KEY_ICONS[key] || whole)
+}
+
 function Prompt() {
   const prompt = useGame((s) => s.prompt)
   const kind = useGame((s) => s.promptKind)
   const touch = useGame((s) => s.touch)
   if (touch && kind !== 'hint' && kind !== 'shopping' && kind !== 'interior') return null
-  return <div className="hud-panel hud-prompt">{prompt}</div>
+  return <div className="hud-panel hud-prompt">{touch ? withTouchButtons(prompt) : prompt}</div>
 }
 
 export default function HUD({ world }) {
