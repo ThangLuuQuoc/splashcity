@@ -133,8 +133,8 @@ export const STRINGS = {
   'phone.bag': { vi: '🎒 Túi đồ cá nhân (Nhấn để dùng):', en: '🎒 Your bag (tap to use):' },
   'phone.bagEmpty': { vi: 'Túi đồ đang trống.', en: 'Your bag is empty.' },
   'phone.bagEmptyHint': {
-    vi: 'Hãy vào Siêu thị Splash Mart để nhặt bánh Oreo, Snack Lay\'s, Chuối già Nam Mỹ, P/S dâu...',
-    en: 'Go into Splash Mart for Oreos, Lay\'s crisps, bananas, strawberry toothpaste...',
+    vi: "Hãy vào Siêu thị Family Mark để nhặt lon Cocacla, lon Pensi, bánh Oreo, Snack Lay's...",
+    en: "Go into Family Mark for Cocacla, Pensi cans, Oreos, Lay's crisps...",
   },
   'phone.use': { vi: 'DÙNG', en: 'USE' },
   'phone.paid': { vi: '✨ Thanh toán thành công! Hàng đã vào túi đồ!', en: '✨ Paid! Everything is in your bag!' },
@@ -165,8 +165,8 @@ export const STRINGS = {
 
   // --- prompt ngoài phố ---------------------------------------------------
   'prompt.enterPolice': { vi: '[E] Vào Trụ sở Cảnh sát', en: '[E] Enter the police station' },
-  'prompt.enterMart': { vi: '[E] Vào Siêu thị Splash Mart', en: '[E] Enter Splash Mart' },
-  'prompt.leaveMart': { vi: '[E] Rời Siêu thị ra ngoài', en: '[E] Leave Splash Mart' },
+  'prompt.enterMart': { vi: '[E] Vào Siêu thị Family Mark', en: '[E] Enter Family Mark' },
+  'prompt.leaveMart': { vi: '[E] Rời Siêu thị Family Mark ra ngoài', en: '[E] Leave Family Mark' },
   'prompt.leavePolice': { vi: '[E] Rời Trụ sở Cảnh sát', en: '[E] Leave the police station' },
   'prompt.boardHeli': { vi: '[E] Lên trực thăng bay ngắm thành phố', en: '[E] Board the helicopter for a city tour' },
   'prompt.boardTrain': { vi: 'Lên tàu điện [E]', en: 'Board the train [E]' },
@@ -190,8 +190,8 @@ export const STRINGS = {
   // --- siêu thị -----------------------------------------------------------
   'mart.pickUp': { vi: '[E] Nhặt {item} ({price}đ) | [P] Xem Túi/Giỏ', en: '[E] Pick up {item} ({price}) | [P] See bag/cart' },
   'mart.checkout': { vi: 'Quầy Thu Ngân • [P] Mở SplashPay Quét Mã QR ({total} đ)', en: 'Checkout • [P] Open SplashPay to scan the QR code ({total})' },
-  'mart.checkoutEmpty': { vi: 'Quầy Thu Ngân Splash Mart • Hãy nhặt hàng trên kệ trước', en: 'Splash Mart checkout • Pick something off a shelf first' },
-  'mart.idle': { vi: 'Siêu thị Splash Mart • [P] Smartphone SplashPay • Phím 1-4: Dùng Item', en: 'Splash Mart • [P] SplashPay phone • Keys 1-4: use an item' },
+  'mart.checkoutEmpty': { vi: 'Quầy Thu Ngân Family Mark • Hãy nhặt hàng trên kệ trước', en: 'Family Mark checkout • Pick something off a shelf first' },
+  'mart.idle': { vi: 'Siêu thị Family Mark • [P] Smartphone SplashPay • Phím 1-4: Dùng Item', en: 'Family Mark • [P] SplashPay phone • Keys 1-4: use an item' },
 
   // --- đồn cảnh sát -------------------------------------------------------
   'police.wantedBoard': { vi: 'BẢNG TRUY NÃ: {stars} ⭐ | Điểm quậy phá: {score} Fun Points', en: 'WANTED BOARD: {stars} ⭐ | Mischief: {score} fun points' },
@@ -235,8 +235,8 @@ export const STRINGS = {
   'place.plazaDesc': { vi: 'Sân nước giữa thành phố, chỗ bắt đầu quậy phá', en: 'The water yard in the middle of town, where the mischief starts' },
   'place.police': { vi: 'Trụ sở Cảnh sát', en: 'Police Station' },
   'place.policeDesc': { vi: 'Vào được: bảng truy nã, kho bóng nước siêu cấp, phòng giam', en: 'You can go in: wanted board, mega balloon store, holding cells' },
-  'place.mart': { vi: 'Siêu thị Splash Mart', en: 'Splash Mart Supermarket' },
-  'place.martDesc': { vi: 'Vào được: 2 tầng bách hoá, thang cuốn, quét QR thanh toán', en: 'You can go in: two floors, escalators, QR checkout' },
+  'place.mart': { vi: 'Siêu thị Family Mark', en: 'Family Mark Supermarket' },
+  'place.martDesc': { vi: 'Vào được: 2 tầng bách hoá Family Mark, thang cuốn, quét QR thanh toán', en: 'You can go in: two floors of Family Mark, escalators, QR checkout' },
   'heliSkin.tour': { vi: 'Trực thăng Du lịch H145', en: 'H145 City Tour' },
   'heliSkin.clockwork': { vi: 'Trực thăng Đồng hồ cơ', en: 'Clockwork Helicopter' },
 

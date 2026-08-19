@@ -25,7 +25,7 @@ export const SUPERMARKET_SPACE = {
     { id: 'shelf_fruits', name: 'Quầy Trái Cây (Chuối Nam Mỹ, Nho, Táo)', x: INTERIORS.supermarketOffset.x + 4, y: INTERIORS.supermarketOffset.y, z: INTERIORS.supermarketOffset.z - 8, productId: 'banana', altProductId: 'queen_apple', floor: 1 },
     // Tầng 2
     { id: 'shelf_toys', name: 'Khu Đồ Chơi (Super Soaker Titan)', x: INTERIORS.supermarketOffset.x - 6, y: INTERIORS.supermarketOffset.y + 6.0, z: INTERIORS.supermarketOffset.z - 8, productId: 'supersoaker_titan', floor: 2 },
-    { id: 'shelf_drinks', name: 'Kệ Nước Giải Khát (Sting Dâu)', x: INTERIORS.supermarketOffset.x + 2, y: INTERIORS.supermarketOffset.y + 6.0, z: INTERIORS.supermarketOffset.z - 8, productId: 'sting_strawberry', floor: 2 },
+    { id: 'shelf_drinks', name: 'Kệ Nước Giải Khát (Cocacla & Pensi)', x: INTERIORS.supermarketOffset.x + 2, y: INTERIORS.supermarketOffset.y + 6.0, z: INTERIORS.supermarketOffset.z - 8, productId: 'coca_cola', altProductId: 'pepsi', floor: 2 },
   ],
 }
 
@@ -169,9 +169,9 @@ export function updateInteriors(world, dt) {
     const zTop = scz - 8.5    // Đỉnh thang (Tầng 2)
 
     // Làn Thang LÊN (Bên phải x ~ scx + 15.5)
-    const onUpEscX = p.x >= scx + 13.5 && p.x <= scx + 17.5
-    // Làn Thang XUỐNG (Bên trái x ~ scx + 12.5)
-    const onDownEscX = p.x >= scx + 10.5 && p.x < scx + 13.5
+    const onUpEscX = p.x >= scx + 13.8 && p.x <= scx + 17.5
+    // Làn Thang XUỐNG (Bên trái x ~ scx + 12.0)
+    const onDownEscX = p.x >= scx + 10.5 && p.x < scx + 13.8
     const onEscZ = p.z <= zBottom + 1.2 && p.z >= zTop - 1.2
 
     if ((onUpEscX || onDownEscX) && onEscZ) {
@@ -179,11 +179,11 @@ export function updateInteriors(world, dt) {
       const targetY = scy + t * 6.0
 
       if (onUpEscX) {
-        // Trượt LÊN Tầng 2
-        if (p.z > zTop + 0.4) p.z -= 3.6 * dt
+        // Trượt LÊN Tầng 2 mượt mà vào tận sàn đón
+        if (p.z > zTop - 0.6) p.z -= 3.8 * dt
       } else {
-        // Trượt XUỐNG Tầng 1
-        if (p.z < zBottom - 0.4) p.z += 3.6 * dt
+        // Trượt XUỐNG Tầng 1 mượt mà vào tận sảnh tầng 1
+        if (p.z < zBottom + 0.6) p.z += 3.8 * dt
       }
 
       p.y = targetY
@@ -193,9 +193,9 @@ export function updateInteriors(world, dt) {
     } else {
       // Xác định đang ở Tầng 1 hay Tầng 2
       const onMainFloor2 = p.x <= scx + 11.5 && p.z <= scz + 0.5
-      const onLanding2 = p.x > scx + 11.5 && p.z <= scz - 8.5
+      const onLanding2 = p.x > scx + 11.5 && p.z <= scz - 7.5
 
-      if ((onMainFloor2 || onLanding2) && p.y >= scy + 4.0) {
+      if ((onMainFloor2 || onLanding2) && p.y >= scy + 3.5) {
         p.supportY = scy + 6.0
       } else {
         p.supportY = scy
@@ -221,7 +221,8 @@ export function updateInteriors(world, dt) {
       const d = Math.hypot(p.x - shelf.x, p.z - shelf.z)
       const correctFloor = Math.abs(p.y - shelf.y) < 2.0
       if (d < 2.8 && correctFloor) {
-        const prod = SUPERMARKET_PRODUCTS.find(pr => pr.id === shelf.productId)
+        const targetId = (shelf.altProductId && p.x > shelf.x) ? shelf.altProductId : shelf.productId
+        const prod = SUPERMARKET_PRODUCTS.find(pr => pr.id === targetId) || SUPERMARKET_PRODUCTS.find(pr => pr.id === shelf.productId)
         if (prod) {
           world.prompt = t('mart.pickUp', { item: prod.shortName, price: prod.price.toLocaleString('vi-VN') })
           world.promptKind = 'shopping'

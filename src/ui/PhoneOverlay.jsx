@@ -16,7 +16,7 @@ export default function PhoneOverlay({ world }) {
   // Nút 📱 nằm ngay trong vùng ngón tay, nên bỏ qua thao tác ~1/4 giây đầu để cú chạm
   // mở điện thoại không tự bấm hộ vào nút bên trong. Xem useArmed.js.
   const armed = useArmed(phoneOpen)
-  useGame((s) => s.lang) // đổi ngôn ngữ là điện thoại vẽ lại
+  const lang = useGame((s) => s.lang) // đổi ngôn ngữ là điện thoại vẽ lại
 
   const [scanning, setScanning] = useState(false)
   const timers = useRef([])
@@ -96,7 +96,7 @@ export default function PhoneOverlay({ world }) {
           {/* SplashPay App Header */}
           <div className="splashpay-card">
             <div className="splashpay-title">
-              <span className="splashpay-logo">💳 SplashPay (MoMo/VNPay)</span>
+              <span className="splashpay-logo">💳 SplashPay</span>
               <span className="splashpay-balance">{(cash).toLocaleString('vi-VN')} đ</span>
             </div>
             <div className="splashpay-status">
@@ -108,21 +108,21 @@ export default function PhoneOverlay({ world }) {
           <div className={`phone-body${checkout ? ' checkout' : ''}`}>
             {checkout ? (
               <div className="phone-checkout">
-                {/* Hoá đơn lên trên cùng: đây mới là thứ người chơi cần đọc. Khung quét
-                    QR to đùng trước đây chiếm 140px phía trên, đẩy cả danh sách hàng lẫn
-                    nút trả tiền xuống dưới mép màn hình. Việc quét giờ nằm gọn trong
-                    chính cái nút, chỉ hiện lúc đang quét. */}
+                {/* Hoá đơn lên trên cùng */}
                 <div className="phone-cart-list">
                   <h4>{t('phone.cart', { count: cart.length })}</h4>
-                  {cart.map((item, idx) => (
-                    <div key={idx} className="phone-cart-item">
-                      <span>{item.icon} {item.shortName} x{item.count}</span>
-                      <span className="item-price">{(item.price * item.count).toLocaleString('vi-VN')} đ</span>
-                    </div>
-                  ))}
+                  {cart.map((item, idx) => {
+                    const short = lang === 'en' ? item.shortName_en || item.shortName : item.shortName
+                    return (
+                      <div key={idx} className="phone-cart-item">
+                        <span>{item.icon} {short} x{item.count}</span>
+                        <span className="item-price">{(item.price * item.count).toLocaleString('vi-VN')} đ</span>
+                      </div>
+                    )
+                  })}
                 </div>
 
-                {/* Tổng tiền nằm ngoài danh sách để giỏ hàng dài mấy cũng không cuộn mất */}
+                {/* Tổng tiền */}
                 <div className="phone-cart-total">
                   <span>{t('phone.total')}</span>
                   <span className="total-amount">{cartTotal.toLocaleString('vi-VN')} đ</span>
@@ -147,19 +147,23 @@ export default function PhoneOverlay({ world }) {
                   </div>
                 ) : (
                   <div className="phone-inv-grid">
-                    {inventory.map((item, idx) => (
-                      <div 
-                        key={idx} 
-                        className="phone-inv-card"
-                        onClick={() => handleUse(item.id)}
-                      >
-                        <span className="inv-icon">{item.icon}</span>
-                        <span className="inv-name">{item.shortName}</span>
-                        <span className="inv-count">x{item.count}</span>
-                        <span className="inv-desc">{item.desc}</span>
-                        <button className="inv-use-btn">{t('phone.use')}</button>
-                      </div>
-                    ))}
+                    {inventory.map((item, idx) => {
+                      const short = lang === 'en' ? item.shortName_en || item.shortName : item.shortName
+                      const desc = lang === 'en' ? item.desc_en || item.desc : item.desc
+                      return (
+                        <div 
+                          key={idx} 
+                          className="phone-inv-card"
+                          onClick={() => handleUse(item.id)}
+                        >
+                          <span className="inv-icon">{item.icon}</span>
+                          <span className="inv-name">{short}</span>
+                          <span className="inv-count">x{item.count}</span>
+                          <span className="inv-desc">{desc}</span>
+                          <button className="inv-use-btn">{t('phone.use')}</button>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>

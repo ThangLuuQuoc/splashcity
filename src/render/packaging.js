@@ -339,23 +339,88 @@ export const PACKAGING = {
     },
   },
 
-  // Lon nước tăng lực Sting dâu - cũng vẽ hai khuôn quanh thân lon.
-  sting: {
+  // Lon nước ngọt Cocacla đỏ tươi mát với dải lượn sóng trắng
+  coca_cola: {
     w: 768, h: 620,
     draw(ctx, W, H) {
       const panel = W / 2
       for (let i = 0; i < 2; i++) {
         ctx.save()
         ctx.translate(i * panel, 0)
-        verticalGradient(ctx, panel, H, '#e63946', '#8d0801')
-        ctx.fillStyle = '#ffd60a'
-        ctx.save()
-        ctx.translate(panel / 2, H * 0.42)
-        ctx.rotate(-0.12)
-        fitText(ctx, 'Sting', 0, 0, panel * 0.8, Math.round(H * 0.26), 'bold italic')
-        ctx.restore()
+        verticalGradient(ctx, panel, H, '#e50914', '#9e0000')
+
+        // Dải lượn sóng trắng đặc trưng
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+        ctx.beginPath()
+        ctx.moveTo(0, H * 0.62)
+        ctx.bezierCurveTo(panel * 0.35, H * 0.48, panel * 0.65, H * 0.72, panel, H * 0.55)
+        ctx.lineTo(panel, H * 0.62)
+        ctx.bezierCurveTo(panel * 0.65, H * 0.78, panel * 0.35, H * 0.55, 0, H * 0.68)
+        ctx.closePath()
+        ctx.fill()
+
+        // Chữ Cocacla uốn lượn phong cách thư pháp
         ctx.fillStyle = '#ffffff'
-        fitText(ctx, 'DÂU TÂY', panel / 2, H * 0.66, panel * 0.7, Math.round(H * 0.1))
+        ctx.save()
+        ctx.translate(panel / 2, H * 0.38)
+        ctx.rotate(-0.1)
+        fitText(ctx, 'Cocacla', 0, 0, panel * 0.85, Math.round(H * 0.28), 'bold italic')
+        ctx.restore()
+
+        // Phụ đề vị nguyên bản
+        ctx.fillStyle = '#ffffff'
+        fitText(ctx, 'ORIGINAL TASTE', panel / 2, H * 0.76, panel * 0.65, Math.round(H * 0.075))
+        fitText(ctx, '330ml', panel / 2, H * 0.88, panel * 0.35, Math.round(H * 0.055))
+        ctx.restore()
+      }
+    },
+  },
+
+  // Lon nước ngọt Pensi xanh dương với biểu tượng quả cầu đỏ-trắng-xanh
+  pepsi: {
+    w: 768, h: 620,
+    draw(ctx, W, H) {
+      const panel = W / 2
+      for (let i = 0; i < 2; i++) {
+        ctx.save()
+        ctx.translate(i * panel, 0)
+        verticalGradient(ctx, panel, H, '#0055b8', '#002255')
+
+        // Biểu tượng tròn Pensi đỏ - trắng - xanh ở giữa
+        const cx = panel / 2
+        const cy = H * 0.36
+        const r = H * 0.16
+
+        // Nửa trên màu đỏ
+        ctx.fillStyle = '#e60012'
+        ctx.beginPath()
+        ctx.arc(cx, cy, r, Math.PI, 0)
+        ctx.bezierCurveTo(cx + r * 0.5, cy + r * 0.35, cx - r * 0.5, cy - r * 0.35, cx - r, cy)
+        ctx.fill()
+
+        // Nửa dưới màu xanh
+        ctx.fillStyle = '#004b93'
+        ctx.beginPath()
+        ctx.arc(cx, cy, r, 0, Math.PI)
+        ctx.bezierCurveTo(cx - r * 0.5, cy - r * 0.35, cx + r * 0.5, cy + r * 0.35, cx + r, cy)
+        ctx.fill()
+
+        // Viền trắng quả cầu
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = 4
+        ctx.beginPath()
+        ctx.arc(cx, cy, r, 0, Math.PI * 2)
+        ctx.stroke()
+
+        // Chữ Pensi in đậm hiện đại
+        ctx.fillStyle = '#ffffff'
+        fitText(ctx, 'PENSI', panel / 2, H * 0.62, panel * 0.75, Math.round(H * 0.18), 'bold')
+
+        // Phụ đề mát lạnh
+        ctx.fillStyle = '#90e0ef'
+        fitText(ctx, 'ICE COLD SẢNG KHOÁI', panel / 2, H * 0.77, panel * 0.7, Math.round(H * 0.07))
+        ctx.fillStyle = '#ffffff'
+        fitText(ctx, '330ml', panel / 2, H * 0.88, panel * 0.35, Math.round(H * 0.055))
         ctx.restore()
       }
     },
