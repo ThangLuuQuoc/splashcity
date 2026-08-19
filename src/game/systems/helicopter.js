@@ -7,11 +7,12 @@
 // Va chạm với toà nhà dùng lại `resolveStatic` của thế giới mở: nó vốn đã bỏ qua các
 // hộp thấp hơn cao độ truyền vào, nên bay cao hơn nóc nhà là tự do bay qua.
 
-import { HELI, POLICE_HELI } from '../config.js'
+import { HELI, POLICE_HELI, SCORE } from '../config.js'
 import { resolveStatic } from '../collision.js'
 import { CITY } from '../config.js'
-import { axisForward, axisRight, keyDown, uiCaptured } from './input.js'
-import { playEngineStart } from '../audio.js'
+import { axisForward, axisRight, keyDown, keyPressed, uiCaptured } from './input.js'
+import { playEngineStart, updateSiren } from '../audio.js'
+import { scarePed } from './pedestrians.js'
 import { t } from '../i18n.js'
 
 export function createHelicopter(city) {
@@ -32,6 +33,12 @@ export function createHelicopter(city) {
     stagger: 0, // giây còn loạng choạng sau khi ăn đạn cao su
     wobble: 0, // pha rung của thân máy bay lúc loạng choạng
     sprayed: 0, // còn đang bị phun trong bao nhiêu giây nữa (policeHeli.js ghi vào)
+    // Đèn pha rọi và còi hú. Điểm rọi trên mặt đất được tính sẵn mỗi nhịp để cả phần
+    // dựng hình lẫn phần "ai đang bị rọi" đọc chung một con số, không ai tự tính lại.
+    searchlight: false,
+    siren: false,
+    spotX: city.helipad.x,
+    spotZ: city.helipad.z,
     // Bay tự động ngắm cảnh
     tour: {
       active: false,
@@ -219,6 +226,52 @@ export function exitHelicopter(world) {
   h.soaked = 0
   h.sprayed = 0
   h.tour.active = false // ra khỏi máy bay thì tour cũng dừng
+  // Xuống máy bay là tắt hết đồ chơi: bỏ lại một chiếc trực thăng không người lái mà đèn
+  // vẫn quét và còi vẫn hú thì vừa vô lý vừa át mất tiếng còi cảnh sát thật.
+  h.searchlight = false
+  h.siren = false
+  updateSiren(0)
+}
+
+/**
+ * Đèn pha quét trúng ai thì người đó giật mình bỏ chạy, xe thì rà phanh nhường đường.
+ *
+ * Điểm chỉ cộng đúng một lần cho mỗi người, tính từ lúc luồng sáng chạm vào: nếu cộng
+ * theo từng khung hình thì chỉ cần treo máy bay rọi vào một đám đông là điểm tự chảy về
+ * hàng nghìn mỗi giây, không còn là phần thưởng cho việc gì cả.
+ */
+function sweepSearchlight(world, dt) {
+  const h = world.heli
+  const lit = h.searchlight && h.y > 2.0
+  const radius = lit ? 6.0 + h.y * 0.15 : 0
+  const r2 = radius * radius
+
+  for (let i = 0; i < world.peds.length; i++) {
+    const ped = world.peds[i]
+    if (ped.indoors) {
+      ped.lit = false
+      continue
+    }
+    const dx = ped.x - h.spotX
+    const dz = ped.z - h.spotZ
+    const inBeam = lit && dx * dx + dz * dz < r2
+    if (inBeam && !ped.lit) {
+      scarePed(ped, h.spotX, h.spotZ)
+      world.score += SCORE.spotPed
+    }
+    ped.lit = inBeam
+  }
+
+  if (!lit) return
+  for (let i = 0; i < world.cars.length; i++) {
+    const car = world.cars[i]
+    if (car.driver !== 'ai') continue // xe đỗ thì vốn đã đứng yên, xe người chơi thì kệ
+    const dx = car.x - h.spotX
+    const dz = car.z - h.spotZ
+    // Bị đèn cảnh sát rọi vào thì tài xế rà phanh - chậm dần chứ không phanh cứng, để
+    // dòng xe phía sau không dồn cục lại thành một đống đứng im.
+    if (dx * dx + dz * dz < r2) car.speed *= Math.max(0, 1 - 2.2 * dt)
+  }
 }
 
 /**
@@ -234,6 +287,13 @@ export function updateHelicopter(world, dt, exitPressed) {
   const turn = blocked ? 0 : axisRight()
   const wantUp = !blocked && keyDown('Space')
   const wantDown = !blocked && (keyDown('ShiftLeft') || keyDown('ShiftRight') || keyDown('KeyC'))
+
+  // Đèn pha rọi và còi hú. Cả hai đều là công tắc bật/tắt chứ không phải giữ phím: trẻ
+  // con không giữ nổi thêm một phím nữa trong lúc đã bận cả hai tay để lái.
+  if (!blocked) {
+    if (keyPressed('KeyL')) h.searchlight = !h.searchlight
+    if (keyPressed('KeyH')) h.siren = !h.siren
+  }
 
   h.rotor += HELI.rotorSpin * dt
 
@@ -360,6 +420,14 @@ export function updateHelicopter(world, dt, exitPressed) {
       h.vz -= hit.z * into
     }
   }
+
+  // Đèn pha chiếu chếch về phía trước mũi chứ không thẳng xuống chân: bay tới đâu thì
+  // vệt sáng đi trước tới đó, nên nhìn thấy người dưới đường trước khi bay qua đầu họ.
+  // Bay càng cao thì điểm rọi càng xa, nhưng chặn ở 20m để luồng sáng không nằm ngang.
+  const lead = Math.min(20, Math.max(4, h.y * 0.45))
+  h.spotX = h.x + Math.sin(h.heading) * lead
+  h.spotZ = h.z + Math.cos(h.heading) * lead
+  sweepSearchlight(world, dt)
 
   // Người chơi ngồi trong khoang.
   p.x = h.x

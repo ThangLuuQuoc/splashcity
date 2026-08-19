@@ -428,16 +428,32 @@
   transform: translate(-50%, -50%);
 }
 
-.touch-buttons {
+/* Cụm nút ngón phải: lưới nút chính, cộng thêm một cột công tắc bên trái khi đang bay.
+   Cột phụ mọc sang NGANG chứ không thêm hàng - chiều cao của lưới nút là thứ đã được đo
+   sát khung nhìn điện thoại nằm ngang (xem media query bên dưới), thêm hàng là mất nút. */
+.touch-cluster {
   position: absolute;
   right: 18px;
   bottom: 22px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.touch-side {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.touch-buttons {
   display: grid;
   grid-template-columns: repeat(2, auto);
   gap: 12px;
   justify-items: center;
   pointer-events: none;
-  z-index: 7;
 }
 
 .touch-btn {
@@ -464,6 +480,13 @@
   transform: scale(0.92);
   background: rgba(255, 210, 63, 0.4);
   border-color: rgba(255, 210, 63, 0.9);
+}
+
+/* Công tắc đang bật: sáng hẳn lên để nhìn một cái là biết đèn rọi / còi đang chạy. */
+.touch-btn.on {
+  background: rgba(255, 210, 63, 0.3);
+  border-color: rgba(255, 210, 63, 0.85);
+  box-shadow: 0 0 12px rgba(255, 210, 63, 0.35);
 }
 
 .touch-btn:disabled { opacity: 0.35; }
@@ -588,7 +611,7 @@
      460px -> 4*66 + 3*9 + 22 = 313px
      380px -> 4*56 + 3*7 + 22 = 267px  (vẫn vừa cả khung nhìn 290px) */
 @media (max-height: 460px) {
-  .touch-buttons { gap: 9px; }
+  .touch-cluster, .touch-side, .touch-buttons { gap: 9px; }
   .touch-btn { width: 66px; height: 66px; }
   .touch-btn.big { width: 80px; height: 80px; }
   .touch-btn .touch-btn-icon { font-size: 22px; }
@@ -597,7 +620,7 @@
 }
 
 @media (max-height: 380px) {
-  .touch-buttons { gap: 7px; }
+  .touch-cluster, .touch-side, .touch-buttons { gap: 7px; }
   .touch-btn { width: 56px; height: 56px; }
   .touch-btn.big { width: 68px; height: 68px; }
   .touch-btn .touch-btn-icon { font-size: 19px; }

@@ -17,11 +17,24 @@ export default function TouchControls({ world }) {
   const baseRef = useRef(null)
   const pointers = useRef(new Map())
   const [mode, setMode] = useState('foot')
+  // Hai công tắc của trực thăng cần sáng lên khi đang bật, nên nút phải biết trạng thái
+  // thật trong world chứ không tự nhớ - phím L/H trên bàn phím cũng bật tắt cùng một cờ.
+  const [heli, setHeli] = useState({ light: false, siren: false })
   useGame((s) => s.lang) // đổi ngôn ngữ là nhãn nút vẽ lại
 
   // Button labels follow what the player is currently doing.
   useEffect(() => {
-    const id = setInterval(() => setMode(world.player.mode), 200)
+    const id = setInterval(() => {
+      setMode(world.player.mode)
+      // Chỉ đổi object khi giá trị thật sự khác, nếu không thì cứ 200ms lại vẽ lại cả
+      // cụm nút một lần dù chẳng có gì thay đổi.
+      setHeli((prev) => {
+        const h = world.heli
+        return prev.light === h.searchlight && prev.siren === h.siren
+          ? prev
+          : { light: h.searchlight, siren: h.siren }
+      })
+    }, 200)
     return () => clearInterval(id)
   }, [world])
 
@@ -128,63 +141,86 @@ export default function TouchControls({ world }) {
         <div className="touch-stick-knob" ref={knobRef} />
       </div>
 
-      <div className="touch-buttons">
-        <HoldButton
-          className="big throw"
-          label={t('btn.throw')}
-          icon="💧"
-          onChange={(held) => { input.fire = held }}
-        />
-        <TapButton
-          label={t(inHeli ? 'btn.land' : inCar || onTrain ? 'btn.getOut' : 'btn.interact')}
-          icon={inHeli ? '🛬' : inCar || onTrain ? '🚪' : '⚡'}
-          onTap={() => virtualTap('KeyE')}
-        />
-        <TapButton
-          label={t('btn.phone')}
-          icon="📱"
-          onTap={() => virtualTap('KeyP')}
-        />
-        {/* Chỉ hiện khi đang bay, để bật bay tự động ngắm cảnh.
-            Đi bộ thì không cần: cần analog đẩy sát vành là đã chạy sẵn, nên nút "Run"
-            chỉ làm chật màn hình. */}
+      <div className="touch-cluster">
+        {/* Công tắc đèn rọi và còi hú: một cột riêng bên trái cụm nút chính, chỉ hiện khi
+            đang bay. Nhét thêm vào lưới 2 cột sẽ đẩy nó lên 5 hàng - cao hơn cả khung
+            nhìn của một chiếc điện thoại nằm ngang, đúng cái bẫy đã ghi trong ui.css.
+            Mọc thêm sang ngang thì chiều cao giữ nguyên. */}
         {inHeli && (
+          <div className="touch-side">
+            <TapButton
+              label={t('btn.light')}
+              icon="🔦"
+              active={heli.light}
+              onTap={() => virtualTap('KeyL')}
+            />
+            <TapButton
+              label={t('btn.siren')}
+              icon="🚨"
+              active={heli.siren}
+              onTap={() => virtualTap('KeyH')}
+            />
+          </div>
+        )}
+
+        <div className="touch-buttons">
+          <HoldButton
+            className="big throw"
+            label={t('btn.throw')}
+            icon="💧"
+            onChange={(held) => { input.fire = held }}
+          />
           <TapButton
-            label={t('btn.auto')}
-            icon="🛩️"
-            onTap={() => virtualTap('KeyX')}
+            label={t(inHeli ? 'btn.land' : inCar || onTrain ? 'btn.getOut' : 'btn.interact')}
+            icon={inHeli ? '🛬' : inCar || onTrain ? '🚪' : '⚡'}
+            onTap={() => virtualTap('KeyE')}
           />
-        )}
-        <TapButton
-          label={t('btn.map')}
-          icon="🗺️"
-          onTap={() => virtualTap('KeyM')}
-        />
-        <HoldButton
-          label={t(inHeli ? 'btn.up' : inCar ? 'btn.brake' : 'btn.jump')}
-          icon={inHeli ? '🔼' : inCar ? '🛑' : '⬆️'}
-          className={inHeli ? 'climb' : ''}
-          onChange={(held) => virtualHold('Space', held)}
-        />
-        {/* Khi bay, ô "Spray" đổi thành nút hạ độ cao: xịt sơn lúc bay vô nghĩa, và giữ
-            nguyên số nút giúp dãy nút không xô lệch dưới ngón tay khi đổi phương tiện.
-            Thêm nút thứ 8 sẽ đẩy lưới 2 cột thành 4 hàng cao gần 400px - quá nửa chiều
-            cao một tablet nằm ngang. */}
-        {inHeli ? (
+          <TapButton
+            label={t('btn.phone')}
+            icon="📱"
+            onTap={() => virtualTap('KeyP')}
+          />
+          {/* Chỉ hiện khi đang bay, để bật bay tự động ngắm cảnh.
+              Đi bộ thì không cần: cần analog đẩy sát vành là đã chạy sẵn, nên nút "Run"
+              chỉ làm chật màn hình. */}
+          {inHeli && (
+            <TapButton
+              label={t('btn.auto')}
+              icon="🛩️"
+              onTap={() => virtualTap('KeyX')}
+            />
+          )}
+          <TapButton
+            label={t('btn.map')}
+            icon="🗺️"
+            onTap={() => virtualTap('KeyM')}
+          />
           <HoldButton
-            label={t('btn.down')}
-            icon="🔽"
-            className="climb"
-            onChange={(held) => virtualHold('ShiftLeft', held)}
+            label={t(inHeli ? 'btn.up' : inCar ? 'btn.brake' : 'btn.jump')}
+            icon={inHeli ? '🔼' : inCar ? '🛑' : '⬆️'}
+            className={inHeli ? 'climb' : ''}
+            onChange={(held) => virtualHold('Space', held)}
           />
-        ) : (
-          <HoldButton
-            label={t('btn.spray')}
-            icon="🎨"
-            disabled={inCar || onTrain}
-            onChange={(held) => virtualHold('KeyF', held)}
-          />
-        )}
+          {/* Khi bay, ô "Spray" đổi thành nút hạ độ cao: xịt sơn lúc bay vô nghĩa, và giữ
+              nguyên số nút giúp dãy nút không xô lệch dưới ngón tay khi đổi phương tiện.
+              Thêm nút thứ 8 sẽ đẩy lưới 2 cột thành 4 hàng cao gần 400px - quá nửa chiều
+              cao một tablet nằm ngang. */}
+          {inHeli ? (
+            <HoldButton
+              label={t('btn.down')}
+              icon="🔽"
+              className="climb"
+              onChange={(held) => virtualHold('ShiftLeft', held)}
+            />
+          ) : (
+            <HoldButton
+              label={t('btn.spray')}
+              icon="🎨"
+              disabled={inCar || onTrain}
+              onChange={(held) => virtualHold('KeyF', held)}
+            />
+          )}
+        </div>
       </div>
     </>
   )
@@ -240,8 +276,8 @@ function HoldButton({ label, icon, className = '', disabled, onChange }) {
   )
 }
 
-/** Fires once per tap. */
-function TapButton({ label, icon, disabled, onTap }) {
+/** Fires once per tap. `active` sáng nút lên khi công tắc nó điều khiển đang bật. */
+function TapButton({ label, icon, disabled, active, onTap }) {
   const ref = useRef(null)
 
   useEffect(() => {
@@ -266,7 +302,7 @@ function TapButton({ label, icon, disabled, onTap }) {
   }, [onTap, disabled])
 
   return (
-    <button ref={ref} className="touch-btn" disabled={disabled}>
+    <button ref={ref} className={`touch-btn${active ? ' on' : ''}`} disabled={disabled}>
       <span className="touch-btn-icon">{icon}</span>
       <span className="touch-btn-label">{label}</span>
     </button>

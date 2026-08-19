@@ -286,10 +286,15 @@ export function updatePolice(world, dt) {
     nearestDist = Math.min(nearestDist, Math.hypot(h.x - p.x, h.y - p.y, h.z - p.z))
   }
 
+  // Còi hú chỉ có một cái duy nhất trong cả trò chơi, nên mọi nguồn phải quy về đây rồi
+  // lấy cái to nhất: nếu để chỗ nào cũng tự gọi updateSiren thì hệ chạy sau sẽ tắt mất
+  // tiếng còi của hệ chạy trước, và ai bật sau cùng thì người đó thắng.
+  const ownSiren = world.player.mode === 'heli' && world.heli.siren ? 0.55 : 0
+
   // Siren volume rises as the nearest cop closes in.
   if (world.stars > 0 && nearestDist < 90) {
-    updateSiren(Math.max(0.25, 1 - nearestDist / 90))
+    updateSiren(Math.max(ownSiren, 0.25, 1 - nearestDist / 90))
   } else {
-    updateSiren(0)
+    updateSiren(ownSiren)
   }
 }

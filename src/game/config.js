@@ -183,6 +183,7 @@ export const SCORE = {
   splashPed: 50,
   splashCar: 80,
   splashCop: 250,
+  spotPed: 25, // rọi đèn pha trúng một người đi đường (chỉ tính lần đầu mỗi người)
   bumpCar: 30,
   hitProp: 10,
   sprayTick: 15, // per completed decal

@@ -8,23 +8,82 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { getMaterial } from './assets.js'
+import { getCanvasTexture, getMaterial } from './assets.js'
 import HeliBody from './HeliBody.jsx'
 import { POLICE_HELI } from '../game/config.js'
 
 function copBodyMaterial() {
-  return getMaterial('copheli:body', () => new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.35, metalness: 0.3 }))
+  return getMaterial('copheli:body', () => new THREE.MeshStandardMaterial({ color: '#0e2b4d', roughness: 0.24, metalness: 0.35 }))
 }
 function copDarkMaterial() {
-  return getMaterial('copheli:dark', () => new THREE.MeshStandardMaterial({ color: '#1b1e24', roughness: 0.5 }))
+  return getMaterial('copheli:dark', () => new THREE.MeshStandardMaterial({ color: '#16191f', roughness: 0.45, metalness: 0.2 }))
 }
 function copGlassMaterial() {
   return getMaterial('copheli:glass', () => new THREE.MeshStandardMaterial({
-    color: '#cfe8ff', roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.5,
+    color: '#122c44', roughness: 0.08, metalness: 0.45, transparent: true, opacity: 0.72,
   }))
 }
 function copMetalMaterial() {
-  return getMaterial('copheli:metal', () => new THREE.MeshStandardMaterial({ color: '#e9ecef', roughness: 0.3, metalness: 0.7 }))
+  return getMaterial('copheli:metal', () => new THREE.MeshStandardMaterial({ color: '#212529', roughness: 0.35, metalness: 0.75 }))
+}
+
+/** Tem sườn "POLICE" + huy hiệu sao. Vẽ riêng từng bên để chữ không bị lộn ngược. */
+function copLiveryTexture(side) {
+  return getCanvasTexture(`copheli:livery:${side}`, 512, 128, (ctx) => {
+    ctx.fillStyle = '#0e2b4d'
+    ctx.fillRect(0, 0, 512, 128)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 118, 512, 10)
+    ctx.fillStyle = '#ffb703'
+    ctx.fillRect(0, 112, 512, 6)
+
+    const badgeX = side === 'left' ? 70 : 442
+    ctx.fillStyle = '#ffd166'
+    ctx.beginPath()
+    ctx.arc(badgeX, 58, 32, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#0e2b4d'
+    ctx.beginPath()
+    ctx.arc(badgeX, 58, 26, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#ffd166'
+    ctx.font = 'bold 30px Arial, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('★', badgeX, 58)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '900 68px "Arial Black", "Segoe UI", sans-serif'
+    ctx.textAlign = side === 'left' ? 'left' : 'right'
+    ctx.fillText('POLICE', side === 'left' ? 120 : 392, 56)
+
+    ctx.font = 'bold 16px Arial, sans-serif'
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
+    ctx.fillText('AIRBUS H145', side === 'left' ? 124 : 388, 100)
+  })
+}
+
+/** Số hiệu trên vây đuôi. */
+function copTailTexture() {
+  return getCanvasTexture('copheli:tail', 256, 256, (ctx) => {
+    ctx.fillStyle = '#0e2b4d'
+    ctx.fillRect(0, 0, 256, 256)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(20, 30, 216, 8)
+    ctx.fillRect(20, 50, 216, 8)
+
+    ctx.fillStyle = '#ffd166'
+    ctx.font = '900 42px "Arial Black", sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('H-145', 128, 110)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 24px Arial, sans-serif'
+    ctx.fillText('POLICE', 128, 160)
+  })
 }
 function beamMaterial() {
   return getMaterial('copheli:beam', () => new THREE.MeshBasicMaterial({
@@ -52,6 +111,8 @@ function CopHeli({ world, index }) {
   const rotorRef = useRef()
   const tailRotorRef = useRef()
   const beaconRef = useRef()
+  const strobeRedRef = useRef()
+  const strobeBlueRef = useRef()
   const beamRef = useRef()
   const beamConeRef = useRef()
   const jetRef = useRef()
@@ -68,13 +129,22 @@ function CopHeli({ world, index }) {
     group.position.set(h.x, h.y, h.z)
     if (bodyRef.current) bodyRef.current.rotation.set(0, h.heading, h.tiltRoll)
     if (rotorRef.current) rotorRef.current.rotation.y = h.rotor
-    if (tailRotorRef.current) tailRotorRef.current.rotation.x = h.rotor * 1.6
+    // Quạt Fenestron nhỏ nên quay nhanh hơn hẳn cánh quạt chính.
+    if (tailRotorRef.current) tailRotorRef.current.rotation.x = h.rotor * 3.2
 
     // Đèn quay trên nóc: nhấp nháy nhanh khi đang bám sát, chậm khi mới chỉ tuần tra.
     if (beaconRef.current) {
       const rate = h.spotOn ? 9 : 4
       const on = Math.floor(world.time * rate) % 2 === 0
-      beaconRef.current.material.emissiveIntensity = on ? 2.6 : 0.25
+      beaconRef.current.material.emissiveIntensity = on ? 3.2 : 0.25
+    }
+
+    // Đèn chớp đỏ - xanh luân phiên dưới bụng: nhìn từ mặt đất là thấy ngay cảnh sát
+    // đang lượn trên đầu, kể cả khi chưa bật đèn pha.
+    if (strobeRedRef.current && strobeBlueRef.current) {
+      const phase = Math.floor(world.time * 12) % 2
+      strobeRedRef.current.material.emissiveIntensity = phase === 0 ? 4.0 : 0.1
+      strobeBlueRef.current.material.emissiveIntensity = phase === 1 ? 4.0 : 0.1
     }
 
     // Đèn pha và vòi rồng: nhóm riêng ngoài thân, xoay cho chỉ thẳng vào người chơi rồi
@@ -120,24 +190,27 @@ function CopHeli({ world, index }) {
             dark={copDarkMaterial()}
             glass={copGlassMaterial()}
             metal={copMetalMaterial()}
+            livery={[copLiveryTexture('left'), copLiveryTexture('right')]}
+            tailDecal={copTailTexture()}
             rotorRef={rotorRef}
             tailRotorRef={tailRotorRef}
+            beaconRef={beaconRef}
+            strobeRedRef={strobeRedRef}
+            strobeBlueRef={strobeBlueRef}
           />
-          {/* Vạch trắng dọc thân cho ra dáng xe công vụ */}
-          <mesh position={[0, 1.35, 0]}>
-            <boxGeometry args={[2.55, 0.34, 2.3]} />
-            <meshStandardMaterial color="#f8f9fa" roughness={0.4} />
-          </mesh>
-          {/* Đèn quay trên nóc */}
-          <mesh ref={beaconRef} position={[0, 2.62, 1.1]}>
-            <sphereGeometry args={[0.3, 10, 8]} />
-            <meshStandardMaterial color="#3aa7ff" emissive="#2b6cff" emissiveIntensity={2.4} />
-          </mesh>
-          {/* Ống đèn pha dưới mũi */}
-          <mesh position={[0, 0.85, 1.5]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.3, 0.3, 0.5, 10]} />
-            <meshStandardMaterial color="#f1f3f5" metalness={0.6} roughness={0.3} />
-          </mesh>
+          {/* Đèn pha Nightsun treo trên giá càng đáp trái - chỗ chùm sáng phát ra */}
+          <group position={[-1.25, 0.65, 1.4]} rotation={[0.3, 0.15, 0]}>
+            <mesh material={copDarkMaterial()}>
+              <cylinderGeometry args={[0.05, 0.05, 0.35, 8]} />
+            </mesh>
+            <mesh position={[0, 0, 0.15]} rotation={[Math.PI / 2, 0, 0]} material={copDarkMaterial()}>
+              <cylinderGeometry args={[0.28, 0.22, 0.35, 16]} />
+            </mesh>
+            <mesh position={[0, 0, 0.33]} rotation={[Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[0.25, 16]} />
+              <meshStandardMaterial color="#e0fbfc" emissive="#bbf2f6" emissiveIntensity={2} roughness={0.1} />
+            </mesh>
+          </group>
         </group>
       </group>
 

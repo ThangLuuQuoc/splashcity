@@ -101,6 +101,7 @@ function spawnPedestrians(rng, city, peds) {
       speed: CROWD.pedSpeed * rng.range(0.8, 1.25),
       state: 'walk',
       fleeTimer: 0,
+      lit: false, // đang nằm trong luồng đèn pha của trực thăng
       soaked: 0,
       phase: rng.range(0, Math.PI * 2),
       // How much weather this one will put up with before heading indoors.
@@ -288,6 +289,11 @@ export function respawnPlayer(world, atStation = true) {
   for (const c of world.footCops) c.active = false
   clearPoliceHelis(world)
   world.copHeliTimer = 0
+  // Bị bắt giữa lúc đang bay thì chiếc trực thăng bị bỏ lại vẫn treo trên trời, nên ít
+  // nhất phải tắt đèn pha và còi của nó đi - không thì cả thành phố nghe còi hú từ một
+  // buồng lái trống.
+  world.heli.searchlight = false
+  world.heli.siren = false
 }
 
 export function resetGame(world) {
