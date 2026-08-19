@@ -88,18 +88,20 @@ export const SHELF_LAYOUT = [
       ['supersoaker_titan', -0.9, TIER_2, 0],
     ],
   },
-  // 7. Tầng 2 - Kệ Nước Tăng Lực Sting Dâu
+  // 7. Tầng 2 - Kệ Nước Giải Khát Lon Cocacla & Lon Pensi
   {
     origin: [2, 6.0, -8],
     items: [
-      ['sting_strawberry', -1.5, TIER_1, 0],
-      ['sting_strawberry', -1.1, TIER_1, 0],
-      ['sting_strawberry', -0.7, TIER_1, 0],
-      ['sting_strawberry', 0.3, TIER_1, 0],
-      ['sting_strawberry', 0.7, TIER_1, 0],
-      ['sting_strawberry', 1.1, TIER_1, 0],
-      ['sting_strawberry', -1.1, TIER_2, 0],
-      ['sting_strawberry', 0.7, TIER_2, 0],
+      ['coca_cola', -1.5, TIER_1, 0],
+      ['coca_cola', -1.1, TIER_1, 0],
+      ['coca_cola', -0.7, TIER_1, 0],
+      ['pepsi', 0.3, TIER_1, 0],
+      ['pepsi', 0.7, TIER_1, 0],
+      ['pepsi', 1.1, TIER_1, 0],
+      ['coca_cola', -1.1, TIER_2, 0],
+      ['coca_cola', -0.7, TIER_2, 0],
+      ['pepsi', 0.7, TIER_2, 0],
+      ['pepsi', 1.1, TIER_2, 0],
     ],
   },
 ]

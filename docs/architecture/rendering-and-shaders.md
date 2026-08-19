@@ -9,13 +9,13 @@ Tài liệu này giải thích chi tiết kiến trúc đồ họa, kỹ thuật
 Thay vì tải hàng chục megabyte các mô hình `.gltf` hoặc texture bitmap, toàn bộ thế giới của Splash City được sinh hoàn toàn trong mã nguồn:
 
 ```
-[Các hàm toán học / Box / Cylinder / Extrude]
-                   │
-                   ▼
-       [BufferGeometry tổng hợp]
-                   │
-                   ▼
-  [InstancedMesh với Ma trận Động (Per-instance Matrix)]
+[Toán học Procedural / Box / Cylinder / Extrude / Canvas Textures]
+                                │
+                                ▼
+                    [BufferGeometry tổng hợp]
+                                │
+                                ▼
+         [InstancedMesh với Ma trận Động (Per-instance Matrix)]
 ```
 
 ### 1.1 Khối nhà & Thành phố (`City.jsx`)
@@ -27,17 +27,21 @@ Thay vì tải hàng chục megabyte các mô hình `.gltf` hoặc texture bitma
 - Mỗi chiếc xe gồm: Khối thân xe chính, buồng lái kính trong suốt, 4 bánh xe hình trụ và đèn xe.
 - Khi xe rẽ, ma trận con của 2 bánh trước được xoay theo góc `steer`, bánh xe tự xoay quanh trục ngang theo quãng đường di chuyển `wheelSpin`.
 
-### 1.3 Nhân vật (`Pedestrians.jsx` & `Player.jsx`)
-- Nhân vật dạng low-poly cách điệu: Thân hình hộp, đầu cầu, tay và chân hình trụ.
-- Hoạt ảnh bước đi (Walk cycle) được tính toán theo hàm $\sin(\text{phase})$ giải tích:
-  $$\theta_{\text{leg}} = \sin(\text{walkPhase}) \times \text{amplitude}$$
-  giúp tạo hoạt ảnh chuyển động mềm mại mà không cần armature/rigging nặng nề.
+### 1.3 Trực thăng Ngắm cảnh (`Helicopter.jsx`)
+- Thân máy bay khí động học được ghép từ khối elip chính, kính chắn gió vát cong, đuôi hình nón và 2 thanh càng đáp bằng thép.
+- Cánh quạt chính (Main Rotor) và cánh quạt đuôi (Tail Rotor) được tạo hình từ các tấm mỏng bán trong suốt với hoạt ảnh xoay tốc độ cao tạo hiệu ứng làm mờ cánh quạt (motion blur disc).
+
+### 1.4 Không gian Nội thất & Sản phẩm Siêu thị (`SupermarketInterior.jsx`, `Products.jsx`)
+- **Quầy kệ & Thang cuốn**: Bố trí theo sơ đồ `martLayout.js` với các tấm vách trang trí, biển hiệu siêu thị và bậc thang cuốn di chuyển.
+- **Bao bì Sản phẩm Thủ tục (`productParts.js`)**:
+  - Gói bánh Oreo, snack Lay's, ống Pringles, thanh Feastables MrBeast được tạo từ hình hộp hoặc hình trụ cơ bản.
+  - Nhãn thương hiệu và màu sắc được vẽ bằng Canvas 2D Texture sắc nét, nhẹ và không tốn bộ nhớ.
 
 ---
 
 ## 2. Đường ống Instancing (`instancing.js`)
 
-Để đảm bảo hàng ngàn đối tượng có thể hiển thị trong 1 draw call duy nhất, hệ thống sử dụng lớp bao bọc ma trận tối ưu trong [`src/render/instancing.js`](file:///f:/2027/splashcity/src/render/instancing.js):
+Để đảm bảo hàng ngàn đối tượng có thể hiển thị trong 1 draw call duy nhất, hệ thống sử dụng lớp bao bọc ma trận tối ưu trong `src/render/instancing.js`:
 
 ```javascript
 import * as THREE from 'three'
@@ -119,6 +123,10 @@ void main() {
 - Khi hạt rơi qua đáy $y < 0$, nó được bọc lại lên đỉnh hộp $y = \text{top}$.
 - Gió (`windStrength` và `windAngle`) tác động trực tiếp vào Vertex Shader làm nghiêng các vệt mưa theo thời gian thực.
 
+### 3.4 Hiệu ứng Thiên tai (`Disasters.jsx`)
+- **Phễu Lốc xoáy**: Khối nón cụt nhiều tầng với ma trận xoay biến thiên theo độ cao và nhiễu sóng tạo cảm giác vặn xoắn.
+- **Bức tường Sóng thần**: Mặt lưới cong chuyển động với shader bọt sóng trắng xóa ở đỉnh ngọn sóng.
+
 ---
 
 ## 4. Hệ thống Vết sơn (Decal System) & Bóng Đổ Giả lập (Blob Shadows)
@@ -130,7 +138,7 @@ void main() {
 
 ### 4.2 Bóng Đổ Giả lập Hiệu năng Cao (`Blob Shadows`)
 - Game thiết lập `shadows={false}` trên R3F `<Canvas>` để tránh chi phí đổ bóng Shadow Map đắt đỏ.
-- Thay vào đó, một `InstancedMesh` chứa các hình tròn dẹt trong suốt màu đen (`opacity = 0.35`) được đặt tại $y = 0.02$ dưới chân mỗi chiếc xe, người đi bộ và chướng ngại vật.
+- Thay vào đó, một `InstancedMesh` chứa các hình tròn dẹt trong suốt màu đen (`opacity = 0.35`) được đặt tại $y = 0.02$ dưới chân mỗi chiếc xe, người đi bộ, trực thăng và chướng ngại vật.
 - Khi xe hoặc người nhảy lên không trung, độ co giãn (scale) và độ mờ của bóng đổ sẽ giảm dần theo hàm tỷ lệ nghịch với độ cao $y$.
 
 ---

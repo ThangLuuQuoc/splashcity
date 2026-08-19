@@ -66,12 +66,27 @@ function generateBuildings(rng, block, out, boxes) {
       const z = cz - innerHalf + r * cd + cd / 2
       const h = rng.range(CITY.buildingMin, CITY.buildingMax) * (cols * rows > 1 ? 0.72 : 1)
 
+      const SHOP_TYPES = ['coffee', 'hotel', 'bank', 'pizza', 'bakery', 'pharmacy', 'cinema', 'bookstore', 'tech', 'gym']
+      const hasShop = rng.chance(0.85)
+      const shop = hasShop ? rng.pick(SHOP_TYPES) : null
+
+      // Xác định mặt tiền quay ra đường
+      let shopFace = null
+      if (shop) {
+        if (r === rows - 1) shopFace = { x, z: z + d / 2, rotY: 0, w, d }
+        else if (r === 0) shopFace = { x, z: z - d / 2, rotY: Math.PI, w, d }
+        else if (c === cols - 1) shopFace = { x: x + w / 2, z, rotY: Math.PI / 2, w, d }
+        else if (c === 0) shopFace = { x: x - w / 2, z, rotY: -Math.PI / 2, w, d }
+      }
+
       const b = {
         x, z, w, d,
         h: Math.max(CITY.buildingMin, h),
         color: rng.pick(PALETTE.buildings),
         roof: rng.pick(PALETTE.roofs),
         windowRows: Math.max(1, Math.floor(h / 4)),
+        shop,
+        shopFace,
       }
       out.push(b)
       boxes.push({
@@ -210,12 +225,12 @@ export function generateCity() {
         addProps(rng, block, props, trees)
         fountains.push({ x: cx - 15, z: cz + 15 })
       } else if (type === 'supermarket') {
-        // Tòa nhà siêu thị Splash Mart 2 tầng bề thế
+        // Tòa nhà siêu thị Family Mark 2 tầng bề thế
         const w = 32, d = 22
         const z = cz - 6
         buildings.push({
           x: cx, z, w, d, h: 14,
-          color: '#d62828', roof: '#222222', windowRows: 2, supermarket: true,
+          color: '#009e49', roof: '#222222', windowRows: 2, supermarket: true,
         })
         staticBoxes.push({ minX: cx - w / 2, maxX: cx + w / 2, minZ: z - d / 2, maxZ: z + d / 2, height: 14 })
         addProps(rng, block, props, trees)

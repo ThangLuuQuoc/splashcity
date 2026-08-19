@@ -4,6 +4,8 @@ import { Color } from 'three'
 import { CITY, PALETTE } from '../game/config.js'
 import { roadCenter } from '../game/city.js'
 import { writeInstances } from './instancing.js'
+import { getCanvasTexture } from './assets.js'
+import { useGame } from '../game/store.js'
 
 const SNOW = new Color('#eef4fa')
 const DAY_WINDOW = new Color('#bfe7ff')
@@ -55,7 +57,9 @@ function buildInstanceLists(city) {
         // `lit` decides whether this window glows once it gets dark.
         for (let c = 0; c < colsW; c++) {
           const x = b.x - b.w / 2 + (c + 0.5) * (b.w / colsW)
-          windows.push({ x, y, z: b.z + b.d / 2 + 0.06, ry: 0, sx: 1.7, sy: 2.1, lit: Math.random() < 0.55 })
+          if ((!b.supermarket && !b.station) || y >= 7) {
+            windows.push({ x, y, z: b.z + b.d / 2 + 0.06, ry: 0, sx: 1.7, sy: 2.1, lit: Math.random() < 0.55 })
+          }
           windows.push({ x, y, z: b.z - b.d / 2 - 0.06, ry: Math.PI, sx: 1.7, sy: 2.1, lit: Math.random() < 0.55 })
         }
         for (let c = 0; c < colsD; c++) {
@@ -115,66 +119,370 @@ function Fountain({ x, z }) {
   )
 }
 
-function PoliceStationSign({ city }) {
+const SHOP_CONFIGS = {
+  coffee: {
+    bg: '#4a2810', border: '#ffd166', text: '#ffffff', canopy: '#4a2810',
+    title_vi: '☕ HIGHLANDS COFFEE', sub_vi: 'Cà Phê Rang Xay • Trà Sữa & Bánh Ngọt',
+    title_en: '☕ HIGHLANDS COFFEE', sub_en: 'Fresh Roasted Coffee • Milk Tea & Bakery',
+  },
+  hotel: {
+    bg: '#0d1b2a', border: '#e0a96d', text: '#f8f9fa', canopy: '#0d1b2a',
+    title_vi: '🏨 GRAND PALACE HOTEL', sub_vi: 'Khách Sạn Sang Trọng • Suite & Spa',
+    title_en: '🏨 GRAND PALACE HOTEL', sub_en: 'Luxury Hotel & Suites • Spa & Resort',
+  },
+  bank: {
+    bg: '#143628', border: '#d4af37', text: '#ffffff', canopy: '#143628',
+    title_vi: '🏦 CITY CENTRAL BANK', sub_vi: 'Ngân Hàng Trung Tâm • ATM 24/7',
+    title_en: '🏦 CITY CENTRAL BANK', sub_en: 'Central Financial Bank • ATM 24/7',
+  },
+  pizza: {
+    bg: '#9b2226', border: '#ee9b00', text: '#ffffff', canopy: '#9b2226',
+    title_vi: '🍕 PIZZA & FAST FOOD', sub_vi: 'Pizza Nướng Củi • Burger & Gà Rán',
+    title_en: '🍕 PIZZA & FAST FOOD', sub_en: 'Wood-Fired Pizza • Burgers & Chicken',
+  },
+  bakery: {
+    bg: '#7f4f24', border: '#ffdd95', text: '#ffffff', canopy: '#7f4f24',
+    title_vi: '🥐 PARIS BAGUETTE', sub_vi: 'Tiệm Bánh Tươi • Bánh Kem Sinh Nhật',
+    title_en: '🥐 PARIS BAGUETTE', sub_en: 'Fresh French Bakery • Birthday Cakes',
+  },
+  pharmacy: {
+    bg: '#005f73', border: '#0a9396', text: '#ffffff', canopy: '#005f73',
+    title_vi: '💊 PHARMACITY 24H', sub_vi: 'Thuốc Kê Đơn • Dược Phẩm & Y Tế',
+    title_en: '💊 PHARMACITY 24H', sub_en: 'Prescription Drugs • Health & Care',
+  },
+  cinema: {
+    bg: '#3c096c', border: '#ff0054', text: '#ffffff', canopy: '#3c096c',
+    title_vi: '🎬 STARLIGHT CINEMA', sub_vi: 'Rạp Chiếu Phim 3D • Bắp Rang Bơ',
+    title_en: '🎬 STARLIGHT CINEMA', sub_en: '3D IMAX Movie Theater • Fresh Popcorn',
+  },
+  bookstore: {
+    bg: '#003566', border: '#ffc300', text: '#ffffff', canopy: '#003566',
+    title_vi: '📚 FAHASA BOOKSTORE', sub_vi: 'Nhà Sách Tri Thức • Văn Phòng Phẩm',
+    title_en: '📚 FAHASA BOOKSTORE', sub_en: 'Books & Knowledge • Gifts & Stationery',
+  },
+  tech: {
+    bg: '#1d2d44', border: '#00b4d8', text: '#ffffff', canopy: '#1d2d44',
+    title_vi: '💻 TECH WORLD STORE', sub_vi: 'Smartphone • Laptop • Phụ Kiện',
+    title_en: '💻 TECH WORLD STORE', sub_en: 'Smartphones • Laptops & Gadgets',
+  },
+  gym: {
+    bg: '#1b1b1b', border: '#f72585', text: '#ffffff', canopy: '#1b1b1b',
+    title_vi: '⚡ TITAN FITNESS & GYM', sub_vi: 'Phòng Tập Thể Hình • Boxing 24/7',
+    title_en: '⚡ TITAN FITNESS & GYM', sub_en: 'Fitness & Bodybuilding • Boxing 24/7',
+  },
+}
+
+function getShopTexture(shopKey, lang = 'vi') {
+  const cfg = SHOP_CONFIGS[shopKey] || SHOP_CONFIGS.coffee
+  const title = lang === 'en' ? cfg.title_en : cfg.title_vi
+  const sub = lang === 'en' ? cfg.sub_en : cfg.sub_vi
+
+  return getCanvasTexture(`shop:${shopKey}:${lang}`, 512, 128, (ctx) => {
+    ctx.fillStyle = cfg.bg
+    ctx.fillRect(0, 0, 512, 128)
+    ctx.strokeStyle = cfg.border
+    ctx.lineWidth = 6
+    ctx.strokeRect(4, 4, 504, 120)
+
+    ctx.fillStyle = cfg.border
+    ctx.font = 'bold 34px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(title, 256, 44)
+
+    ctx.fillStyle = cfg.text
+    ctx.font = 'bold 18px sans-serif'
+    ctx.fillText(sub, 256, 92)
+  })
+}
+
+function policeSignTexture(lang = 'vi') {
+  return getCanvasTexture(`city:police_sign:${lang}`, 1024, 256, (ctx) => {
+    ctx.fillStyle = '#1d3557'
+    ctx.fillRect(0, 0, 1024, 256)
+    ctx.strokeStyle = '#ffd166'
+    ctx.lineWidth = 10
+    ctx.strokeRect(6, 6, 1012, 244)
+
+    ctx.fillStyle = '#ffd166'
+    ctx.font = 'bold 64px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)'
+    ctx.shadowBlur = 6
+    const title = lang === 'en' ? '⭐ POLICE HEADQUARTERS • CITY POLICE ⭐' : '⭐ TRỤ SỞ CẢNH SÁT • POLICE STATION ⭐'
+    ctx.fillText(title, 512, 85)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 30px sans-serif'
+    const sub = lang === 'en' ? 'SECURITY ZONE • PROTECTING THE CITY 24/7' : 'KHU VỰC AN NINH • GIỮ GÌN TRẬT TỰ THÀNH PHỐ'
+    ctx.fillText(sub, 512, 175)
+  })
+}
+
+function PoliceStationSign({ city, lang = 'vi' }) {
   const s = city.policeStation
+  if (!s) return null
+  const policeTex = policeSignTexture(lang)
   return (
-    <group position={[s.x, SLAB, s.z - 8]}>
-      {/* Biển hiệu POLICE STATION */}
-      <mesh position={[0, 13.4, 8.2]}>
-        <boxGeometry args={[16, 2.2, 0.4]} />
-        <meshLambertMaterial color="#1d3557" />
+    <group position={[s.x, SLAB, s.z]}>
+      {/* Biển hiệu chính POLICE STATION ngay mặt tiền cửa */}
+      <mesh position={[0, 5.0, 0.25]}>
+        <boxGeometry args={[18, 2.2, 0.4]} />
+        <meshStandardMaterial map={policeTex} />
       </mesh>
-      {/* Phù hiệu vàng */}
-      <mesh position={[0, 13.4, 8.5]}>
-        <boxGeometry args={[2.4, 1.2, 0.2]} />
-        <meshBasicMaterial color="#ffd23f" />
+      {/* Đèn tín hiệu khẩn cấp chớp sáng (Đỏ & Xanh cảnh sát) */}
+      <mesh position={[-4, 6.3, 0.2]}>
+        <boxGeometry args={[1.6, 0.4, 0.3]} />
+        <meshBasicMaterial color="#d90429" />
       </mesh>
-      {[-4.5, 4.5].map((x) => (
-        <mesh key={x} position={[x, 13.4, 8.5]}>
-          <boxGeometry args={[1.2, 1.2, 0.2]} />
-          <meshBasicMaterial color="#e8f1ff" />
-        </mesh>
-      ))}
+      <mesh position={[4, 6.3, 0.2]}>
+        <boxGeometry args={[1.6, 0.4, 0.3]} />
+        <meshBasicMaterial color="#0077b6" />
+      </mesh>
+      {/* Mái đón đồn cảnh sát */}
+      <mesh position={[0, 3.8, 1.0]} rotation={[0.1, 0, 0]}>
+        <boxGeometry args={[12, 0.25, 2.0]} />
+        <meshStandardMaterial color="#1d3557" />
+      </mesh>
       {/* Cửa kính ra vào đồn */}
-      <mesh position={[0, 1.8, 8.1]}>
-        <boxGeometry args={[4.5, 3.6, 0.2]} />
-        <meshStandardMaterial color="#457b9d" transparent opacity={0.6} />
+      <mesh position={[0, 1.9, 0.15]}>
+        <boxGeometry args={[5.2, 3.6, 0.15]} />
+        <meshStandardMaterial color="#457b9d" transparent opacity={0.7} />
+      </mesh>
+      {/* Pano biểu tượng cảnh sát trên nóc tòa nhà */}
+      <mesh position={[0, 12.8, -4.0]}>
+        <boxGeometry args={[16, 2.4, 0.4]} />
+        <meshStandardMaterial map={policeTex} />
       </mesh>
     </group>
   )
 }
 
-function SupermarketSign({ city }) {
+function familyMarkSignTexture(lang = 'vi') {
+  return getCanvasTexture(`city:family_mark_sign:${lang}`, 1024, 256, (ctx) => {
+    // 3 dải màu xanh lá - trắng - xanh dương phong cách Family Mark
+    ctx.fillStyle = '#009e49'
+    ctx.fillRect(0, 0, 1024, 80)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 80, 1024, 96)
+    ctx.fillStyle = '#0070ba'
+    ctx.fillRect(0, 176, 1024, 80)
+
+    // Khung viền sáng
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 8
+    ctx.strokeRect(4, 4, 1016, 248)
+
+    // Chữ FAMILY MARK ở dải giữa
+    ctx.fillStyle = '#0070ba'
+    ctx.font = 'bold 78px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
+    ctx.shadowBlur = 6
+    ctx.fillText('FAMILY MARK', 512, 128)
+
+    // Chữ siêu thị tiện lợi ở dải trên
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 36px sans-serif'
+    ctx.shadowBlur = 2
+    const topText = lang === 'en' ? '🏪 2-STOREY CONVENIENCE STORE 🏪' : '🏪 SIÊU THỊ TIỆN LỢI 2 TẦNG 🏪'
+    ctx.fillText(topText, 512, 40)
+
+    // Chữ 24/7 ở dải dưới
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 28px sans-serif'
+    const bottomText = lang === 'en' ? '⭐ OPEN 24/7 • SPLASHPAY QR ACCEPTED ⭐' : '⭐ 24/7 CONVENIENCE STORE • QUÉT MÃ QR SPLASHPAY ⭐'
+    ctx.fillText(bottomText, 512, 216)
+  })
+}
+
+function familyMarkDoorTexture(lang = 'vi') {
+  return getCanvasTexture(`city:family_mark_door:${lang}`, 512, 512, (ctx) => {
+    ctx.fillStyle = 'rgba(230, 245, 255, 0.85)'
+    ctx.fillRect(0, 0, 512, 512)
+    ctx.strokeStyle = '#009e49'
+    ctx.lineWidth = 14
+    ctx.strokeRect(10, 10, 492, 492)
+
+    // Dải nhận diện Family Mark trên cửa
+    ctx.fillStyle = '#009e49'
+    ctx.fillRect(20, 40, 472, 50)
+    ctx.fillStyle = '#0070ba'
+    ctx.fillRect(20, 90, 472, 50)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 40px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('FAMILY MARK', 256, 90)
+
+    ctx.fillStyle = '#0070ba'
+    ctx.font = 'bold 32px sans-serif'
+    ctx.fillText(lang === 'en' ? '🛒 WELCOME TO FAMILY MARK 🛒' : '🛒 KÍNH CHÀO QUÝ KHÁCH 🛒', 256, 240)
+
+    ctx.fillStyle = '#d90429'
+    ctx.font = 'bold 34px sans-serif'
+    ctx.fillText(lang === 'en' ? 'PRESS [E] TO ENTER STORE' : 'BẤM [E] ĐỂ VÀO SIÊU THỊ', 256, 340)
+
+    ctx.fillStyle = '#2b2d42'
+    ctx.font = '22px sans-serif'
+    ctx.fillText(lang === 'en' ? 'FLOOR 1: GROCERY • FLOOR 2: TOY ZONE' : 'TẦNG 1: BÁCH HÓA • TẦNG 2: ĐỒ CHƠI', 256, 420)
+  })
+}
+
+function familyMarkPosterTexture(type, lang = 'vi') {
+  return getCanvasTexture(`city:family_mark_poster_${type}:${lang}`, 512, 512, (ctx) => {
+    ctx.fillStyle = type === 'left' ? '#e63946' : '#0077b6'
+    ctx.fillRect(0, 0, 512, 512)
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 10
+    ctx.strokeRect(8, 8, 496, 496)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    if (type === 'left') {
+      ctx.font = 'bold 42px sans-serif'
+      ctx.fillText(lang === 'en' ? '🥤 SOFT DRINKS' : '🥤 NƯỚC GIẢI KHÁT', 256, 90)
+      ctx.font = 'bold 36px sans-serif'
+      ctx.fillStyle = '#ffd166'
+      ctx.fillText('COCACLA & PENSI', 256, 170)
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 64px sans-serif'
+      ctx.fillText('15.000 đ', 256, 280)
+      ctx.font = '26px sans-serif'
+      ctx.fillText(lang === 'en' ? '⚡ +50% SPRINT SPEED BOOST' : '⚡ TĂNG 50% TỐC ĐỘ CHẠY', 256, 380)
+    } else {
+      ctx.font = 'bold 42px sans-serif'
+      ctx.fillText(lang === 'en' ? '🍪 SNACKS & TOYS' : '🍪 SNACK & ĐỒ CHƠI', 256, 90)
+      ctx.font = 'bold 36px sans-serif'
+      ctx.fillStyle = '#ffd166'
+      ctx.fillText('OREO & SUPER SOAKER', 256, 170)
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 40px sans-serif'
+      ctx.fillText(lang === 'en' ? 'SPECIAL PROMOTION' : 'ƯU ĐÃI ĐẶC BIỆT', 256, 280)
+      ctx.font = '26px sans-serif'
+      ctx.fillText(lang === 'en' ? '📱 PAY WITH SPLASHPAY' : '📱 THANH TOÁN SPLASHPAY', 256, 380)
+    }
+  })
+}
+
+function SupermarketSign({ city, lang = 'vi' }) {
   const s = city.supermarket
   if (!s) return null
+  const signTex = familyMarkSignTexture(lang)
+  const doorTex = familyMarkDoorTexture(lang)
+  const posterLeft = familyMarkPosterTexture('left', lang)
+  const posterRight = familyMarkPosterTexture('right', lang)
+
   return (
-    <group position={[s.x, SLAB, s.z - 11]}>
-      {/* Biển hiệu SPLASH MART đỏ vàng rực rỡ */}
-      <mesh position={[0, 15.2, 11.2]}>
-        <boxGeometry args={[22, 3.2, 0.6]} />
-        <meshLambertMaterial color="#d62828" />
+    <group position={[s.x, SLAB, s.z]}>
+      {/* 1. BIỂN HIỆU MẶT TIỀN CHÍNH (FAMILY MARK) NGAY TRÊN CỬA RA VÀO */}
+      <mesh position={[0, 5.4, 0.25]}>
+        <boxGeometry args={[22, 2.4, 0.4]} />
+        <meshStandardMaterial map={signTex} roughness={0.2} />
       </mesh>
-      {/* Chữ SPLASH MART nổi bật màu vàng neon */}
-      <mesh position={[0, 15.2, 11.6]}>
-        <boxGeometry args={[18, 1.8, 0.2]} />
-        <meshBasicMaterial color="#ffb703" />
+      {/* Khung viền nhôm đen cho biển hiệu */}
+      <mesh position={[0, 5.4, 0.05]}>
+        <boxGeometry args={[22.4, 2.6, 0.2]} />
+        <meshStandardMaterial color="#212529" metalness={0.8} />
       </mesh>
-      {/* Mái hiên sọc đỏ trắng phía trước */}
-      <mesh position={[0, 4.8, 11.5]} rotation={[0.2, 0, 0]}>
-        <boxGeometry args={[16, 0.3, 3.2]} />
-        <meshStandardMaterial color="#e63946" />
+
+      {/* 2. MÁI HIÊN VÒM ĐÓN KHÁCH MÀU XANH LÁ FAMILY MARK */}
+      <mesh position={[0, 4.0, 1.2]} rotation={[0.15, 0, 0]}>
+        <boxGeometry args={[18, 0.25, 2.4]} />
+        <meshStandardMaterial color="#009e49" roughness={0.3} />
       </mesh>
-      {/* Cửa kính tự động phía trước */}
-      <mesh position={[0, 2.0, 11.1]}>
-        <boxGeometry args={[6, 4, 0.2]} />
-        <meshStandardMaterial color="#00b4d8" transparent opacity={0.6} />
+      {/* Cột trụ kim loại đỡ mái hiên */}
+      {[-8.5, 8.5].map((xp) => (
+        <mesh key={xp} position={[xp, 2.0, 2.2]}>
+          <cylinderGeometry args={[0.1, 0.1, 4.0, 8]} />
+          <meshStandardMaterial color="#ced4da" metalness={0.9} />
+        </mesh>
+      ))}
+
+      {/* 3. CỬA KÍNH TRƯỢT TỰ ĐỘNG CÓ DECAL HƯỚNG DẪN [E] VÀO SIÊU THỊ */}
+      <mesh position={[0, 1.9, 0.15]}>
+        <boxGeometry args={[6.8, 3.8, 0.15]} />
+        <meshStandardMaterial map={doorTex} transparent opacity={0.9} roughness={0.1} />
       </mesh>
+
+      {/* 4. VÁCH KÍNH TRƯNG BÀY POSTER KHUYẾN MÃI (2 BÊN CỬA) */}
+      <mesh position={[-9.5, 1.9, 0.12]}>
+        <boxGeometry args={[8.0, 3.6, 0.12]} />
+        <meshStandardMaterial map={posterLeft} roughness={0.3} />
+      </mesh>
+      <mesh position={[9.5, 1.9, 0.12]}>
+        <boxGeometry args={[8.0, 3.6, 0.12]} />
+        <meshStandardMaterial map={posterRight} roughness={0.3} />
+      </mesh>
+
+      {/* 5. BIỂN HIỆU PANO NÓC NHÀ SIÊU THỊ (NHÌN TỪ XA / TRÊN CAO) */}
+      <mesh position={[0, 15.6, -4.0]}>
+        <boxGeometry args={[22, 3.4, 0.5]} />
+        <meshStandardMaterial map={signTex} roughness={0.2} />
+      </mesh>
+      {/* Khung giàn giáo thép đỡ pano trên nóc */}
+      {[-8, 8].map((xp) => (
+        <mesh key={xp} position={[xp, 14.8, -5.5]} rotation={[0.4, 0, 0]}>
+          <boxGeometry args={[0.2, 3.2, 0.2]} />
+          <meshStandardMaterial color="#343a40" metalness={0.9} />
+        </mesh>
+      ))}
     </group>
   )
 }
 
+function BuildingShopSigns({ city, lang = 'vi' }) {
+  const shops = useMemo(() => {
+    return city.buildings
+      .filter((b) => b.shop && b.shopFace)
+      .map((b) => ({
+        shop: b.shop,
+        face: b.shopFace,
+        h: b.h,
+      }))
+  }, [city.buildings])
+
+  return (
+    <group>
+      {shops.map((s, idx) => {
+        const cfg = SHOP_CONFIGS[s.shop] || SHOP_CONFIGS.coffee
+        const tex = getShopTexture(s.shop, lang)
+        const signW = Math.min(s.face.w - 1.2, 10)
+        return (
+          <group
+            key={idx}
+            position={[s.face.x, SLAB, s.face.z]}
+            rotation={[0, s.face.rotY, 0]}
+          >
+            {/* Biển hiệu cửa hàng mặt tiền */}
+            <mesh position={[0, 4.3, 0.22]}>
+              <boxGeometry args={[signW, 1.6, 0.35]} />
+              <meshStandardMaterial map={tex} roughness={0.3} />
+            </mesh>
+            {/* Mái hiên thương hiệu */}
+            <mesh position={[0, 3.3, 0.9]} rotation={[0.2, 0, 0]}>
+              <boxGeometry args={[signW - 0.2, 0.2, 1.5]} />
+              <meshStandardMaterial color={cfg.canopy} roughness={0.4} />
+            </mesh>
+            {/* Cửa kính & mặt tiền tầng 1 */}
+            <mesh position={[0, 1.6, 0.1]}>
+              <boxGeometry args={[Math.min(signW - 0.8, 7.5), 3.0, 0.12]} />
+              <meshStandardMaterial color="#2b3445" transparent opacity={0.6} roughness={0.1} />
+            </mesh>
+          </group>
+        )
+      })}
+    </group>
+  )
+}
 
 export default function City({ world }) {
+  const lang = useGame((s) => s.lang)
   const city = world.city
   const lists = useMemo(() => buildInstanceLists(city), [city])
 
@@ -300,8 +608,9 @@ export default function City({ world }) {
       </instancedMesh>
 
       {city.fountains.map((f, i) => <Fountain key={i} x={f.x} z={f.z} />)}
-      <PoliceStationSign city={city} />
-      <SupermarketSign city={city} />
+      <PoliceStationSign city={city} lang={lang} />
+      <SupermarketSign city={city} lang={lang} />
+      <BuildingShopSigns city={city} lang={lang} />
 
 
       {/* boundary hedge */}

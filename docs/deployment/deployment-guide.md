@@ -23,7 +23,8 @@ Cấu trúc thư mục đầu ra `dist/`:
 ```
 dist/
 ├── index.html                 # Điểm nhập HTML chính (đã minify)
-├── manifest.json              # Web App Manifest hỗ trợ cài đặt PWA
+├── manifest.webmanifest       # Web App Manifest hỗ trợ cài đặt PWA
+├── sw.js                      # Service Worker lưu cache offline
 ├── icon-192.png / icon-512.png # Icon các kích thước
 └── assets/                    # Chứa mã nguồn JS & CSS đã được bundle và nén tối đa
 ```
@@ -32,7 +33,7 @@ dist/
 
 ## 2. Triển khai lên Vercel (Khuyến nghị)
 
-Dự án đã có sẵn cấu hình tối ưu tại [`vercel.json`](file:///f:/2027/splashcity/vercel.json):
+Dự án đã có sẵn cấu hình tối ưu tại `vercel.json`:
 
 ```json
 {
@@ -129,6 +130,8 @@ jobs:
 
 ## 4. Tối ưu Trải nghiệm Cài đặt Ứng dụng Web (PWA)
 
-Splash City được thiết kế như một Progressive Web App (PWA):
+Splash City được thiết kế như một Progressive Web App (PWA) hoàn chỉnh:
+- File `public/manifest.webmanifest` định nghĩa icon, màu chủ đề thanh tiêu đề và chế độ `display: standalone`.
+- Service worker `public/sw.js` đăng ký cache tĩnh giúp game có thể khởi động ngay lập tức và chơi offline.
 - Thẻ `<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">` ngăn ngừa thao tác zoom vô ý trên màn hình cảm ứng.
 - Khi người dùng truy cập từ Safari (iOS) hoặc Chrome (Android), họ có thể chọn **"Add to Home Screen"** (Thêm vào màn hình chính) để chơi toàn màn hình không có thanh địa chỉ trình duyệt, mang lại trải nghiệm như một native app 60 FPS.

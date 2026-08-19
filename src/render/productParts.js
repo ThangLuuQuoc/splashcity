@@ -51,9 +51,14 @@ export const PRODUCT_PARTS = {
     // Cùng khuôn thanh sô-cô-la nhưng bao bì riêng: đỏ KitKat khác hẳn nâu Meiji
     { kind: 'box', size: [0.3, 0.52, 0.09], pos: [0, 0.26, 0], surface: 'kitkat', color: PRINTED },
   ],
-  sting_strawberry: [
-    // Lon nước tăng lực
-    { kind: 'cyl', size: [0.12, 0.46], seg: 18, pos: [0, 0.23, 0], surface: 'sting', color: PRINTED },
+  coca_cola: [
+    // Lon Cocacla 330ml dáng tiêu chuẩn: thân in hình + nắp nhôm bạc
+    { kind: 'cyl', size: [0.12, 0.46], seg: 18, pos: [0, 0.23, 0], surface: 'coca_cola', color: PRINTED },
+    { kind: 'cyl', size: [0.105, 0.04], seg: 18, pos: [0, 0.48, 0], surface: 'glossy', color: '#c9ced6' },
+  ],
+  pepsi: [
+    // Lon Pensi 330ml mát lạnh: thân in hình + nắp nhôm bạc
+    { kind: 'cyl', size: [0.12, 0.46], seg: 18, pos: [0, 0.23, 0], surface: 'pepsi', color: PRINTED },
     { kind: 'cyl', size: [0.105, 0.04], seg: 18, pos: [0, 0.48, 0], surface: 'glossy', color: '#c9ced6' },
   ],
   supersoaker_titan: [

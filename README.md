@@ -5,59 +5,113 @@ grab a car, cause chaos, get chased by police — but every "crime" is harmless:
 water balloons, bumper-car driving and washable rainbow paint. No weapons, no
 blood, no violence. Get caught and you get a time-out at the police station.
 
-## Run it
+Now featuring **interiors** (2-floor Splash Mart Supermarket & Police HQ), a **sightseeing helicopter**, an **interactive city map & GPS navigation**, **natural disasters** (tornadoes, tsunami waves), a **smartphone with SplashPay**, and **multilingual support (English / Tiếng Việt)**!
+
+---
+
+## 🚀 Run it
 
 ```bash
 npm install
-```
-
-```bash
 npm run dev
 ```
 
-Then open http://localhost:5173. `npm run build` produces a static `dist/`
-you can host anywhere, and `npm run preview` serves it.
+Then open `http://localhost:5173`. 
 
-## Controls
+To build for production:
+```bash
+npm run build
+npm run preview
+```
+
+---
+
+## 🎮 Controls
 
 | Key | Action |
 | --- | --- |
-| `W` `A` `S` `D` | Walk / drive |
+| `W` `A` `S` `D` | Walk / drive / fly |
 | Mouse (or drag) | Look around |
-| `Shift` | Run |
-| `Space` | Jump on foot, handbrake in a car |
-| `E` | Get in or out of a car, or board / leave a train |
-| Left click / `B` | Throw a water balloon |
+| `Shift` | Sprint (on foot) / Fly up (in helicopter) |
+| `Space` | Jump on foot / Handbrake in a car / Fly down in helicopter |
+| `E` | Enter or exit a car, board or leave train / helicopter, enter buildings |
+| Left click / `B` | Throw a water balloon / Throw items (apples, grapes) |
 | `F` | Spray rainbow paint on a wall |
+| `1` - `4` | Use inventory items (Oreo, Lay's, Banana, P/S Toothpaste, etc.) |
+| `P` | Open / close Smartphone (SplashPay QR Scanner & inventory) |
+| `M` | Open / close City Map & GPS Navigation / Fast Travel |
+| `H` | Toggle Helicopter Sightseeing Autopilot Tour |
 | `C` | Change the weather |
 | `N` | Skip to the next time of day |
 | `Q` / arrow keys | Turn the camera without a mouse |
-| `Esc` | Release the mouse |
+| `Esc` | Release mouse pointer lock |
 
-### On a tablet or phone
+### 📱 On a Tablet or Phone
 
-Touch controls appear automatically on a touchscreen — no keyboard or mouse
-needed. Tapping Play also asks for fullscreen, since browser chrome eats a lot
-of a tablet screen.
+Touch controls appear automatically on touchscreens — no keyboard or mouse needed. Tapping Play also requests fullscreen.
 
 | Touch | Action |
 | --- | --- |
-| Left half — drag | Walk or drive. The stick appears wherever your thumb lands, so you never have to look for it |
-| Left half — push to the rim | Run. Push halfway and you walk; it's analog, and so is steering |
-| Right half — drag | Look around, replacing mouse-look |
-| 💧 hold | Throw water balloons |
-| 🚗 / 🚪 tap | Get in or out of a car or train |
-| ⬆️ / 🛑 hold | Jump on foot, brake while driving |
-| 🎨 hold | Spray paint (greyed out while driving) |
-| Chips at the top | Tap to change the weather or the time of day |
+| **Left stick (floating)** | Walk, drive, or fly. Appears wherever your thumb lands. Push to the rim to sprint. |
+| **Right half — drag** | Look around (camera rotation). |
+| **💧 hold** | Throw water balloons / items. |
+| **🚗 / 🚪 tap** | Get in or out of a car, train, helicopter, or enter/exit buildings. |
+| **⬆️ / 🛑 hold** | Jump on foot, handbrake while driving, fly up/down in helicopter. |
+| **🎨 hold** | Spray rainbow paint on walls. |
+| **📱 tap** | Open Smartphone & SplashPay. |
+| **🗺️ tap** | Open Interactive City Map & GPS Navigation. |
+| **Top chips** | Tap to toggle Weather, Time of Day, or Language (🇻🇳 VN / 🇬🇧 EN). |
 
-The HUD rearranges itself for touch: the minimap moves to the right edge with
-the balloon count under it, leaving both bottom corners free for your thumbs.
-Pixel ratio and the weather particle budget are also reduced on mobile GPUs.
+The HUD automatically optimizes for mobile: minimap and status stack safely out of thumb reach, DPR is capped at 1.5–1.75 to protect GPU battery life, and pinch-to-zoom is suppressed.
 
-## How to play
+---
 
-Make mischief to earn **fun points** and raise your **wanted level**:
+## 🌟 Key Features
+
+### 🛒 1. Interiors & Shopping (Splash Mart & Police HQ)
+- **Splash Mart Supermarket (2 Floors)**:
+  - **1st Floor**: Authentic Vietnamese groceries — *P/S Strawberry Toothpaste for kids*, *Oreo cookies*, *Lay's potato chips*, *Pringles*, *Meiji chocolate*, *MrBeast Feastables*, *KitKat*, and fresh fruits (*South American bananas*, *grapes*, *Queen apples*).
+  - **Mechanical Escalator**: Ride between the 1st and 2nd floors smoothly.
+  - **2nd Floor**: Toy department (*Super Soaker water blasters*) and energy drinks (*Sting Strawberry*).
+  - **Checkout Counter**: Scan items with your phone's **SplashPay** QR scanner to purchase.
+- **Police Station HQ**:
+  - Explore the reception, police computers, and **Dynamic Wanted Board** displaying your current mugshot and mischief score.
+  - **Holding Cells & Armory**: Find secret stash balloons and the Mega Balloon.
+  - **Emergency Alarm Button**: Sound the siren and trigger chaos inside the precinct!
+
+### 🎒 2. Item Effects & Inventory
+- 🍌 **Banana Peels**: Drop banana peels behind you to make police cars and pedestrians spin out 360°.
+- 🍪 **Snacks & Sweets (Oreo, Lay's, Feastables)**: Consume for a **Sugar Rush** speed boost (+50% to +85% sprint speed).
+- 🪥 **P/S Strawberry Toothpaste**: Squeeze fragrant pink slippery patches onto the floor.
+- 🍎 **Fresh Fruit**: Hurl apples and grapes as fun projectiles.
+
+### 🚁 3. Sightseeing Helicopter
+- Board the helicopter at rooftop helipads or designated landing zones.
+- **Full 3D Flight Dynamics**: Collective climb/descend, responsive cyclic steering, and rotor blade animation.
+- **Autopilot Tour Mode (`H`)**: Sit back and enjoy an automatic cinematic aerial tour around the city's key landmarks.
+
+### 🗺️ 4. Interactive City Map & GPS Navigation
+- Press `M` to bring up the full vector street map.
+- Click any landmark, supermarket, police station, or train station to set a GPS waypoint.
+- Engage **Auto-Run mode** to sprint directly to your destination along the street grid.
+
+### 🌪️ 5. Natural Disasters & Dynamic Ocean
+- **Tornadoes**: Roam across the city, lifting cars and pedestrians into the swirling funnel before flinging them across the skyline.
+- **Tsunami Waves**: Massive ocean surges sweep inland across the beach, washing props and traffic downstream.
+- **Dynamic Water**: Procedural Gerstner wave shader surrounding the entire island.
+
+### 🚂 6. Skyline Railway
+- An elevated transit loop with 4 stations (*Fountain Square, East Market, North Park, West Gate*).
+- Board moving trains to instantly break police line-of-sight and lose your wanted level.
+
+### 🌐 7. Multilingual Support
+- Instant one-tap toggle between **Tiếng Việt** and **English** with full UI and in-game localization.
+
+---
+
+## 🏆 How to Play
+
+Earn **fun points** and raise your **wanted level** with harmless mischief:
 
 | Mischief | Points | Heat |
 | --- | --- | --- |
@@ -68,130 +122,29 @@ Make mischief to earn **fun points** and raise your **wanted level**:
 | Knock over a cone or bin | 10 | +3 |
 | Drive on the sidewalk | — | +12/sec |
 | Finish a paint tag | 15 | +9/sec while spraying |
+| Slip police with banana peel | 150 | — |
 
-Stars appear at 15 / 35 / 60 / 85 heat, and each star sends more and faster
-police after you. Break line of sight for **6 seconds** and the stars start
-flashing — stay hidden and they burn off one at a time.
+Stars appear at **15 / 35 / 60 / 85 heat**. Break line of sight for **6 seconds** to cool down. If pinned by police, you get **BUSTED**, keep half your score, and respawn safely outside the station.
 
-Out of balloons? Drive or walk over any **fountain** (the blue dots on the
-minimap) to refill.
+---
 
-### The Skyline
+## 🏗️ How It's Built
 
-An elevated railway loops through the middle of the city on concrete pillars,
-with four stations — Fountain Square, East Market, North Park and West Gate
-(the yellow squares on the minimap). Walk up a station ramp, wait on the
-platform, and press `E` to board a train with its doors open.
+- **Engine**: React 18, React Three Fiber (Three.js v0.169), Vite 5.
+- **State Architecture**: **React never owns simulation state.** Everything lives in a single mutable `world` object updated in-place at 60 FPS in a single `useFrame` loop. Zustand only synchronizes low-frequency HUD data.
+- **Procedural Everything**: Zero external 3D models or audio files. All meshes are generated procedurally, and all sounds are real-time Web Audio API synthesizers.
+- **Broadphase Collision**: 2.5D spatial hash grid with multi-height AABB checks.
 
-The railway is your escape hatch. Police can't reach you up on a platform, but
-they can still see you, so the heat keeps burning while they gather below. Only
-once you're actually **on a moving train** do they lose you completely and the
-stars start to drop. Press `E` at the next station to step off — or press it
-between stations to leap off and drop to the street.
+---
 
-The pillars holding the viaduct up sit on the sidewalk, so they're fair game for
-bumper-car driving too.
+## 📚 Documentation
 
-### Weather and the clock
+Detailed documentation is available in the [`docs/`](docs/) directory:
 
-A full day passes every eight minutes. The sun rises in the east at 06:00 and
-sets in the west at 18:00, and the sky, the sunlight, the fog and the horizon
-glow all move with it. After dark the stars and moon come out, windows
-light up across the city, and every car switches its headlights on.
-
-Six weather states roll around on their own, cross-fading over about twelve
-seconds and following plausible sequences — sun clouds over before it rains, a
-thunderstorm rains itself out rather than snapping back to blue sky:
-
-| Weather | What changes |
-| --- | --- |
-| ☀️ Sunny | Clear sky, long views, light breeze |
-| ☁️ Cloudy | Grey and flat, sun dimmed |
-| 🍃 Windy | Leaves tumbling down the street, balloons blown off course |
-| 🌧️ Rainy | Rain, short views, slippery roads, streets emptying |
-| ⛈️ Thunderstorm | Downpour, hard gusts, lightning flashes and thunder |
-| 🌨️ Snowy | Snow settling white over the roads and rooftops, very slippery |
-
-Weather is not just paint:
-
-- **Grip** falls with the weather — snow costs you about half your acceleration,
-  braking and cornering bite, and the car slides wide out of turns.
-- **Wind** shoves water balloons off line, so you have to aim into a gust.
-- **Rain, snow and darkness** all shorten how far the police can spot you, which
-  makes a stormy night the best time to cause trouble.
-- **Pedestrians go indoors** when it turns bad — a thunderstorm empties the
-  streets, so there is nobody left to soak.
-
-Press `C` to change the weather yourself and `N` to jump to the next time of
-day, or click the two chips at the top of the screen. Taking manual control
-stops the automatic cycle.
-
-If a police car pins you for just over a second — or an officer on foot catches
-you while you're walking — you're **BUSTED**: you keep half your points and
-restart outside the station with a couple of seconds of grace.
-
-## How it's built
-
-React Three Fiber over Three.js, with Vite. No external assets: every mesh is
-generated geometry and every sound is a small WebAudio synth, so the repo has no
-binary files.
-
-The one architectural rule: **React never owns simulation state.** Everything
-lives in a plain mutable object (`src/game/world.js`) that systems mutate in
-place inside a single `useFrame` (`src/game/GameLoop.jsx`). React only renders,
-and the zustand store (`src/game/store.js`) holds just the handful of numbers the
-HUD displays. Putting entities in React state re-renders the tree every frame and
-dies at ~30 entities; this way ~80 moving things hold 60fps.
-
-```
-src/
-  game/
-    config.js        every tunable number - speeds, heat values, thresholds
-    city.js          procedural city: blocks, buildings, road graph
-    rail.js          the elevated loop, stations, and walkable surfaces
-    weather.js       weather states, transition table, blending
-    collision.js     circle-vs-AABB with a uniform-grid broadphase
-    world.js         the mutable world object
-    GameLoop.jsx     the single useFrame, runs systems in a fixed order
-    systems/         player, vehicle, traffic, pedestrians, police, heat,
-                     actions, projectiles, physics, train, weather, input
-  render/            instanced renderers - city, cars, crowd, props, effects
-  ui/                HUD, minimap, start screen, busted overlay
-```
-
-Physics is deliberately custom and arcade, not a physics engine: the city is
-flat, so everything is a circle on a plane colliding with axis-aligned boxes.
-That is a couple hundred lines, is fully deterministic, and gives the bouncy
-bumper-car feel the game is built around.
-
-Police navigate with a breadth-first distance field rebuilt from the player's
-nearest intersection three times a second (`systems/police.js`). Each cop walks
-downhill on that field, switches to direct pursuit within 42 units of clear line
-of sight, and bails out to chase on foot — a little slower than your sprint, so
-escaping is always possible.
-
-The railway is one arc-length-parameterised polyline (`rail.js`). Trains, station
-placement, pillar spacing and the minimap all read positions off it via
-`railAt(s)`, and trains brake into each platform on a `v = sqrt(2·a·d)` curve.
-Station platforms and ramps are the game's only walkable surfaces above the
-street, so `resolveStatic` takes the entity's height: a player up on a platform
-walks straight over the pillars holding it up, while a car at street level still
-bounces off them.
-
-Weather is a director that cross-fades between named states into one set of
-blended numbers (`world.weather.params`). Nothing downstream ever reads the
-state name, only those numbers, so every transition is smooth for free and rain
-can fade into snow without the particle system jumping. `render/Atmosphere.jsx`
-owns the sky, both directional lights, the hemisphere light and the fog together,
-because a sky that disagrees with the light falling on the city looks broken.
-
-One trap worth knowing: a custom `ShaderMaterial` must end with
-`#include <colorspace_fragment>`. Uniform colours arrive already converted to
-linear space, and writing them raw into an sRGB target renders the sky far
-darker than the colours you chose.
-
-## Tuning
-
-Open `src/game/config.js`. Every speed, score, heat value and threshold is there.
-The game also exposes `window.world` in the browser console, so you can poke at
-the live simulation while it runs.
+- 📐 [Technical Architecture](docs/architecture/technical-architecture.md) — Core state model, GameLoop pipeline & broadphase collision.
+- 🧠 [Game Systems Specification](docs/architecture/game-systems.md) — Deep dive into AI, helicopter, interiors, navigation, disasters & railway.
+- 🎨 [Rendering & Shaders](docs/architecture/rendering-and-shaders.md) — Instancing, procedural assets, water shaders & GPU budgets.
+- 💻 [Developer Guide](docs/guides/developer-guide.md) — Setup, directory structure, debug console tools & golden rules.
+- ⚙️ [Configuration & Tuning](docs/guides/configuration-and-tuning.md) — Reference for all tunable game parameters in `config.js`.
+- 🚀 [Adding New Features](docs/guides/adding-new-features.md) — Step-by-step cookbooks for adding items, vehicles & interiors.
+- 🚢 [Deployment Guide](docs/deployment/deployment-guide.md) — Production build, PWA manifest, and Vercel/GitHub Pages deployment.

@@ -4,105 +4,106 @@ Tài liệu này là một cẩm nang (Cookbook) từng bước hướng dẫn c
 
 ---
 
-## 1. Hướng dẫn Thêm một Trò Quậy Phá / Vũ Khí Mới (New Mischief / Action)
+## 1. Thêm một Sản phẩm Mới vào Siêu thị Splash Mart
 
-*Ví dụ: Thêm tính năng đặt **Vỏ Chuối (Banana Peel)** làm trượt bánh xe cảnh sát.*
+*Ví dụ: Thêm sản phẩm **Trà Sữa Trân Châu (Boba Milk Tea)** vào kệ đồ uống Tầng 2.*
 
-```
-[Bấm phím X] ──> [actions.js: Thả vỏ chuối] ──> [world.bananas pool]
-                                                       │
-                                  ┌────────────────────┴───────────────────┐
-                                  ▼                                        ▼
-                   [physics.js: Kiểm tra xe đè trúng]       [Effects.jsx: Render vỏ chuối]
-                                  │
-                                  ▼
-                   [Xe mất lái, xoay 360 độ + Điểm thưởng]
-```
-
-### Bước 1: Khai báo Cấu hình trong `src/game/config.js`
+### Bước 1: Khai báo trong `src/game/config.js`
+Thêm sản phẩm vào mảng `SUPERMARKET_PRODUCTS`:
 ```javascript
-export const ACTIONS = {
-  // ... cấu hình cũ
-  bananaCooldown: 1.0,
-  bananaSpinDuration: 2.0,
-  maxBananas: 20,
-}
-
-export const SCORE = {
+export const SUPERMARKET_PRODUCTS = [
   // ...
-  slipCop: 150, // Thưởng 150 điểm khi làm cảnh sát trượt vỏ chuối
+  {
+    id: 'boba_tea',
+    name: 'Trà Sữa Trân Châu Đường Đen',
+    shortName: 'Trà Sữa Boba',
+    category: 'drinks',
+    price: 40000,
+    shelf: 'shelf_drinks',
+    color: '#8b5a2b',
+    icon: '🧋',
+    desc: 'Hút trân châu nhận Sugar Rush siêu tốc độ trong 15s',
+    type: 'snack_speed',
+  },
+]
+```
+
+### Bước 2: Tạo Hình học & Nhãn Bao bì trong `src/render/productParts.js`
+Thêm hàm vẽ ly trà sữa thủ tục:
+```javascript
+export function createBobaCupGeometry() {
+  // Tạo hình trụ thon dần về đáy (CylinderGeometry)
+  return new THREE.CylinderGeometry(0.18, 0.14, 0.42, 16)
 }
 ```
 
-### Bước 2: Thêm Object Pool vào `src/game/world.js`
+### Bước 3: Xử lý Hiệu ứng khi Sử dụng trong `src/game/systems/inventory.js`
 ```javascript
-export function createWorld() {
-  // ...
-  world.bananas = pool(ACTIONS.maxBananas, () => ({
-    active: false,
-    x: 0,
-    z: 0,
-    y: 0,
-    life: 0,
-  }))
-  return world
-}
-```
-
-### Bước 3: Xử lý Kích hoạt trong `src/game/systems/actions.js`
-```javascript
-import { keyPressed } from './input.js'
-
-export function updateActions(world, dt) {
-  // ...
-  if (keyPressed('KeyX') && world.player.mode === 'car') {
-    spawnBanana(world)
-  }
-}
-
-function spawnBanana(world) {
-  const banana = world.bananas.find(b => !b.active)
-  if (!banana) return
-  
-  const p = world.player
-  banana.active = true
-  banana.x = p.x
-  banana.z = p.z
-  banana.y = 0
-  banana.life = 30 // Tồn tại trong 30 giây
-}
-```
-
-### Bước 4: Kiểm tra Va chạm & Hiệu ứng trong `src/game/systems/physics.js`
-```javascript
-export function resolveBananas(world, dt) {
-  for (const b of world.bananas) {
-    if (!b.active) continue
-    b.life -= dt
-    if (b.life <= 0) { b.active = false; continue }
-
-    for (const cop of world.police) {
-      if (!cop.active) continue
-      const dist = Math.hypot(cop.x - b.x, cop.z - b.z)
-      if (dist < 2.0) {
-        // Cảnh sát trượt vỏ chuối: Mất lái xoay vòng
-        cop.steer = (Math.random() - 0.5) * 10
-        cop.heading += 6 * dt
-        b.active = false
-        world.score += SCORE.slipCop
-        break
-      }
-    }
+export function useItem(world, item) {
+  if (item.id === 'boba_tea') {
+    // Kích hoạt buff tăng 70% tốc độ chạy trong 15 giây
+    addBuff(world, { type: 'speed', multiplier: 1.7, duration: 15.0 })
+    playBobaSound() // Web Audio API sound
   }
 }
 ```
-
-### Bước 5: Render Hình ảnh trong `src/render/Effects.jsx`
-Tạo một `InstancedMesh` nhỏ hiển thị mô hình vỏ chuối màu vàng tại tọa độ $(x, y, z)$ của từng quả chuối đang `active`.
 
 ---
 
-## 2. Hướng dẫn Thêm một Kiểu Thời tiết Mới (New Weather State)
+## 2. Thêm một Bãi đáp Trực thăng / Địa danh Mới (New Helipad Landmark)
+
+*Ví dụ: Thêm bãi đáp trực thăng trên nóc Khách sạn Grand Hotel.*
+
+### Bước 1: Khai báo Địa danh trong `src/game/landmarks.js`
+```javascript
+export const LANDMARKS = [
+  // ...
+  {
+    id: 'hotel_helipad',
+    name: 'Bãi đáp Khách sạn Grand Hotel',
+    type: 'helipad',
+    x: 120,
+    y: 38.5, // Tọa độ nóc tòa nhà
+    z: -88,
+    icon: '🚁',
+  },
+]
+```
+
+### Bước 2: Cập nhật Lộ trình Bay Tự động trong `src/game/systems/helicopter.js`
+Trực thăng Autopilot Tour sẽ tự động nhận diện địa danh mới và bổ sung vào danh sách các điểm lượn tròn ngắm cảnh!
+
+---
+
+## 3. Thêm một Câu Dịch Đa Ngôn ngữ Mới (Localization)
+
+*Ví dụ: Thêm thông báo mới khi nhặt được siêu vũ khí.*
+
+### Bước 1: Khai báo chuỗi song ngữ trong `src/game/strings.js`
+```javascript
+export const STRINGS = {
+  vi: {
+    // ...
+    mega_balloon_acquired: 'Đã nhận được Siêu Bóng Nước Khổng Lồ!',
+  },
+  en: {
+    // ...
+    mega_balloon_acquired: 'Mega Water Balloon Acquired!',
+  },
+}
+```
+
+### Bước 2: Sử dụng trong UI hoặc Gameplay thông qua `t()`
+```javascript
+import { t } from '../i18n.js'
+
+// Trong HUD hoặc Toast thông báo:
+showMessage(t('mega_balloon_acquired'))
+```
+
+---
+
+## 4. Thêm một Kiểu Thời tiết Mới (New Weather State)
 
 *Ví dụ: Thêm trạng thái **Sương mù Dày đặc (Dense Fog)**.*
 
@@ -152,29 +153,12 @@ Nhờ kiến trúc pha trộn (blending params), bầu trời, tầm nhìn sươ
 
 ---
 
-## 3. Hướng dẫn Thêm một Loại Xe Mới (New Vehicle Variant)
-
-*Ví dụ: Thêm **Xe Tải Kem (Ice Cream Truck)** chạy phát nhạc dạo phố.*
-
-1. **Thêm loại xe vào `src/game/world.js`**:
-   ```javascript
-   cars.push({
-     // ... các thuộc tính cũ
-     kind: 'ice_cream', // 'traffic' | 'parked' | 'police' | 'ice_cream'
-     chimeTimer: 0,
-   })
-   ```
-2. **Xử lý Logic riêng trong `src/game/systems/traffic.js`**:
-   Khi người chơi đến gần Xe Kem trong bán kính $6$ đơn vị, phát âm thanh chuông kem từ Web Audio API.
-3. **Mở rộng Render trong `src/render/Cars.jsx`**:
-   Bổ sung thêm hộp trang trí (mô hình que kem 3D trên nóc xe) trong `Cars.jsx` cho các xe có `kind === 'ice_cream'`.
-
----
-
-## 4. Danh sách Kiểm tra trước khi Merge Code (PR Checklist)
+## 5. Danh sách Kiểm tra trước khi Merge Code (PR Checklist)
 
 - [ ] Không có `useState` hay phân bổ bộ nhớ mới (`new Array`, `new Object`) bên trong vòng lặp `useFrame`.
+- [ ] Mọi phím tắt mới tuân thủ **Hợp đồng Sở hữu Input** (chỉ 1 hệ thống duy nhất xử lý).
 - [ ] Mọi tham số mới đã được khai báo tập trung trong `src/game/config.js`.
+- [ ] Các chuỗi văn bản hiển thị cho người dùng đều được bọc qua `t('key')` trong `src/game/strings.js`.
 - [ ] Không sử dụng file binary 3D / audio ngoài, giữ vững kiến trúc 100% Procedural.
-- [ ] Kiểm tra mượt mà 60 FPS trên máy tính bảng hoặc chế độ Device Emulation của Chrome DevTools.
+- [ ] Kiểm tra mượt mà 60 FPS trên thiết bị di động hoặc chế độ Device Emulation của Chrome DevTools.
 - [ ] Đã chạy thử lệnh `npm run build` và kiểm tra không có lỗi cú pháp hoặc cảnh báo build.
