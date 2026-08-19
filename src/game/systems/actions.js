@@ -1,4 +1,4 @@
-import { ACTIONS, HEAT, SCORE, PALETTE } from '../config.js'
+import { ACTIONS, HEAT, HELI_SKINS, SCORE, PALETTE } from '../config.js'
 import { nearbyBoxes } from '../collision.js'
 import { isOnBlock } from '../city.js'
 import { addHeat } from './heat.js'
@@ -248,7 +248,8 @@ export function updatePrompt(world) {
       return set(t('prompt.heliTour', { icon: target.icon, place: target.name }), 'hint')
     }
     const alt = Math.round(world.heli.y)
-    return set(t('prompt.heliControls', { alt }), 'controls')
+    const skin = t(`heliSkin.${HELI_SKINS[world.heli.skin].id}`)
+    return set(t('prompt.heliControls', { alt, skin }), 'controls')
   }
 
   if (p.mode === 'car') {

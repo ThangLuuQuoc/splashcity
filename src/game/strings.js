@@ -32,6 +32,7 @@ export const STRINGS = {
   'keys.autopilot': { vi: 'khi đang bay: tự bay vòng quanh các khu vực đẹp', en: 'in the air: autopilot tours the city sights on its own' },
   'keys.searchlight': { vi: 'khi đang bay: bật/tắt đèn pha rọi xuống đường', en: 'in the air: toggle the searchlight sweeping the streets' },
   'keys.heliSiren': { vi: 'khi đang bay: bật/tắt còi hú và đèn chớp', en: 'in the air: toggle the siren and flashing lights' },
+  'keys.heliSkin': { vi: 'khi đang bay: đổi sang mẫu trực thăng khác', en: 'in the air: switch to another helicopter model' },
   'keys.throw': { vi: 'tạt một quả bóng nước', en: 'throw a water balloon' },
   'keys.spray': { vi: 'xịt sơn cầu vồng', en: 'spray rainbow paint' },
   'keys.weather': { vi: 'đổi thời tiết', en: 'change the weather' },
@@ -55,6 +56,7 @@ export const STRINGS = {
   'touchKeys.autopilot': { vi: 'tự bay: trực thăng tự vòng quanh các khu vực đẹp', en: 'autopilot: the helicopter tours the sights by itself' },
   'touchKeys.searchlight': { vi: 'bật/tắt đèn pha rọi xuống đường', en: 'toggle the searchlight sweeping the streets' },
   'touchKeys.heliSiren': { vi: 'bật/tắt còi hú và đèn chớp của trực thăng', en: 'toggle the helicopter siren and flashing lights' },
+  'touchKeys.heliSkin': { vi: 'đổi sang mẫu trực thăng khác', en: 'switch to another helicopter model' },
   'touchKeys.weatherChips': { vi: 'chạm để đổi thời tiết hoặc giờ', en: 'tap to change weather or time' },
 
   // --- nhãn nút cảm ứng ---------------------------------------------------
@@ -72,6 +74,7 @@ export const STRINGS = {
   'btn.spray': { vi: 'Xịt sơn', en: 'Spray' },
   'btn.light': { vi: 'Đèn rọi', en: 'Light' },
   'btn.siren': { vi: 'Còi hú', en: 'Siren' },
+  'btn.skin': { vi: 'Đổi mẫu', en: 'Model' },
 
   // --- HUD ----------------------------------------------------------------
   'hud.score': { vi: 'Điểm vui', en: 'Fun points' },
@@ -176,8 +179,8 @@ export const STRINGS = {
   'prompt.footControls': { vi: 'Bấm chuột ném • F xịt sơn • P điện thoại • X bật chế độ chạy • 1-4 dùng đồ', en: 'Click to throw • F spray • P phone • X run mode • 1-4 use an item' },
   'prompt.footControlsRunning': { vi: 'Bấm chuột ném • F xịt sơn • P điện thoại • X tắt chạy • Shift đi chậm', en: 'Click to throw • F spray • P phone • X run off • Shift to walk' },
   'prompt.heliControls': {
-    vi: '🚁 Cao {alt}m • W/S bay • A/D quay • Space lên • Shift xuống • L đèn rọi • H còi hú • X tự bay • E hạ cánh',
-    en: '🚁 {alt}m up • W/S move • A/D turn • Space up • Shift down • L light • H siren • X autopilot • E land',
+    vi: '🚁 {skin} • Cao {alt}m • W/S bay • A/D quay • Space lên • Shift xuống • L đèn rọi • H còi hú • K đổi mẫu • X tự bay • E hạ cánh',
+    en: '🚁 {skin} • {alt}m up • W/S move • A/D turn • Space up • Shift down • L light • H siren • K model • X autopilot • E land',
   },
   'prompt.heliTour': {
     vi: '🛩️ Bay tự động — đang ngắm {icon} {place} • chạm cần lái để tự lái lại',
@@ -234,6 +237,9 @@ export const STRINGS = {
   'place.policeDesc': { vi: 'Vào được: bảng truy nã, kho bóng nước siêu cấp, phòng giam', en: 'You can go in: wanted board, mega balloon store, holding cells' },
   'place.mart': { vi: 'Siêu thị Splash Mart', en: 'Splash Mart Supermarket' },
   'place.martDesc': { vi: 'Vào được: 2 tầng bách hoá, thang cuốn, quét QR thanh toán', en: 'You can go in: two floors, escalators, QR checkout' },
+  'heliSkin.tour': { vi: 'Trực thăng Du lịch H145', en: 'H145 City Tour' },
+  'heliSkin.clockwork': { vi: 'Trực thăng Đồng hồ cơ', en: 'Clockwork Helicopter' },
+
   'place.helipad': { vi: 'Sân đỗ Trực thăng', en: 'Helipad' },
   'place.helipadDesc': { vi: 'Có trực thăng đậu sẵn - bấm E để bay ngắm thành phố từ trên cao', en: 'A helicopter is parked here - press E to tour the city from the air' },
   'place.park1': { vi: 'Công viên Cây Xanh', en: 'Green Park' },

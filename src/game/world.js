@@ -305,7 +305,11 @@ export function resetGame(world) {
   world.cart.length = 0
   world.phoneOpen = false
   world.mapOpen = false
+  // Mẫu trực thăng là lựa chọn của người chơi chứ không phải trạng thái ván đấu, nên nó
+  // sống sót qua ván mới - cùng lý do với autoRun.
+  const skin = world.heli.skin
   world.heli = createHelicopter(world.city) // trực thăng về lại sân đỗ
+  world.heli.skin = skin
   world.cash = 500000
   world.activeBuffs = { speedBoost: 1, timer: 0 }
   world.stats = { splashed: 0, bumped: 0, tagged: 0, busted: 0 }

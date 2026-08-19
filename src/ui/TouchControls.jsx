@@ -160,6 +160,11 @@ export default function TouchControls({ world }) {
               active={heli.siren}
               onTap={() => virtualTap('KeyH')}
             />
+            <TapButton
+              label={t('btn.skin')}
+              icon="🔁"
+              onTap={() => virtualTap('KeyK')}
+            />
           </div>
         )}
 

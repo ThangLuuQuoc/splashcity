@@ -7,7 +7,7 @@
 // Va chạm với toà nhà dùng lại `resolveStatic` của thế giới mở: nó vốn đã bỏ qua các
 // hộp thấp hơn cao độ truyền vào, nên bay cao hơn nóc nhà là tự do bay qua.
 
-import { HELI, POLICE_HELI, SCORE } from '../config.js'
+import { HELI, HELI_SKINS, POLICE_HELI, SCORE } from '../config.js'
 import { resolveStatic } from '../collision.js'
 import { CITY } from '../config.js'
 import { axisForward, axisRight, keyDown, keyPressed, uiCaptured } from './input.js'
@@ -37,6 +37,7 @@ export function createHelicopter(city) {
     // dựng hình lẫn phần "ai đang bị rọi" đọc chung một con số, không ai tự tính lại.
     searchlight: false,
     siren: false,
+    skin: 0, // mẫu máy bay đang dùng, chỉ số trong HELI_SKINS
     spotX: city.helipad.x,
     spotZ: city.helipad.z,
     // Bay tự động ngắm cảnh
@@ -293,6 +294,9 @@ export function updateHelicopter(world, dt, exitPressed) {
   if (!blocked) {
     if (keyPressed('KeyL')) h.searchlight = !h.searchlight
     if (keyPressed('KeyH')) h.siren = !h.siren
+    // Đổi mẫu máy bay. Chỉ là nước sơn với hình khối: mọi thông số bay, bán kính va chạm
+    // và vị trí đèn pha đều dùng chung, nên đổi giữa trời cũng không lệch đi đâu được.
+    if (keyPressed('KeyK')) h.skin = (h.skin + 1) % HELI_SKINS.length
   }
 
   h.rotor += HELI.rotorSpin * dt

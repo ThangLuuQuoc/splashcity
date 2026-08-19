@@ -179,6 +179,13 @@ export const HEAT = {
   copCloseRange: 24, // this close, they have you regardless of corners
 }
 
+// Các mẫu trực thăng người chơi đổi được bằng phím K hoặc nút 🔁. Thứ tự ở đây là thứ
+// tự bấm vòng qua, và chỉ số của mẫu được lưu trong world.heli.skin.
+export const HELI_SKINS = [
+  { id: 'tour', icon: '🚁' },
+  { id: 'clockwork', icon: '⚙️' },
+]
+
 export const SCORE = {
   splashPed: 50,
   splashCar: 80,

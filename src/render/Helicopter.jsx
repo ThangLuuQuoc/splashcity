@@ -4,15 +4,21 @@
 // lần cũng không sinh thêm tài nguyên GPU. Cánh quạt quay bằng cách ghi thẳng vào
 // rotation của group trong useFrame - không đi qua React state, giống các render khác.
 //
-// Thân dùng chung HeliBody với đội bay cảnh sát, nhưng sơn đỏ - trắng của trực thăng du
+// Thân mẫu H145 dùng chung với đội bay cảnh sát, nhưng sơn đỏ - trắng của trực thăng du
 // lịch chứ không phải xanh navy công vụ: đang bị rượt trên trời thì phải nhìn một cái là
 // biết chiếc nào là mình, chiếc nào là cảnh sát.
+//
+// Người chơi đổi mẫu bằng phím K. Mọi thứ ngoài hình khối - sân đỗ, đèn pha rọi, chùm
+// sáng, đèn chớp - nằm ngoài phần thân và dùng chung cho mọi mẫu, nên thêm một mẫu nữa
+// chỉ là viết thêm một component thân với đúng bốn cái ref quen thuộc.
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { HELI_SKINS } from '../game/config.js'
 import { getCanvasTexture, getMaterial } from './assets.js'
 import HeliBody from './HeliBody.jsx'
+import ClockworkBody from './ClockworkBody.jsx'
 
 function bodyMaterial() {
   return getMaterial('heli:body', () => new THREE.MeshStandardMaterial({ color: '#ef233c', roughness: 0.3, metalness: 0.3 }))
@@ -143,6 +149,12 @@ function padTexture() {
 const LAMP = { x: -1.25, y: 0.65, z: 1.4 }
 
 export default function Helicopter({ world }) {
+  // Mẫu máy bay là thứ duy nhất ở đây phải đi qua React: đổi mẫu là dựng lại cây hình
+  // khối. Cập nhật trong useFrame và chỉ khi khác đi, nên bình thường không tốn gì.
+  // Giá trị đầu đọc thẳng từ world chứ không mặc định là 0: component này dựng lại mỗi
+  // lần vào/ra ván, và bắt đầu bằng mẫu sai rồi mới nhảy về mẫu đúng ở frame sau là một
+  // cú giật thấy rõ.
+  const [skin, setSkin] = useState(() => world.heli.skin)
   const rotorRef = useRef()
   const tailRotorRef = useRef()
   const bodyRef = useRef()
@@ -153,6 +165,8 @@ export default function Helicopter({ world }) {
   const beamConeRef = useRef()
   const groundSpotRef = useRef()
 
+  const clockwork = HELI_SKINS[skin]?.id === 'clockwork'
+
   useFrame(() => {
     const h = world.heli
     const body = bodyRef.current
@@ -161,9 +175,12 @@ export default function Helicopter({ world }) {
       // Thân quay theo hướng mũi, cộng thêm độ nghiêng khi tăng tốc / vào cua.
       body.rotation.set(h.tiltPitch, h.heading, h.tiltRoll)
     }
+    if (skin !== h.skin) setSkin(h.skin)
+
     if (rotorRef.current) rotorRef.current.rotation.y = h.rotor
-    // Quạt Fenestron nhỏ nên quay nhanh hơn hẳn cánh quạt chính.
-    if (tailRotorRef.current) tailRotorRef.current.rotation.x = h.rotor * 3.2
+    // Quạt Fenestron nhỏ nên quay nhanh hơn hẳn cánh quạt chính; quạt đuôi gỗ hai lá của
+    // mẫu đồng hồ cơ thì to và chậm, quay nhanh như Fenestron sẽ thành một vệt mờ.
+    if (tailRotorRef.current) tailRotorRef.current.rotation.x = h.rotor * (clockwork ? 1.6 : 3.2)
     // Đèn chống va chạm trên nóc nháy đều, kể cả lúc đang đỗ.
     if (beaconRef.current) {
       const on = Math.floor(world.time * 5) % 2 === 0
@@ -251,19 +268,29 @@ export default function Helicopter({ world }) {
 
       {/* Thân trực thăng */}
       <group ref={bodyRef}>
-        <HeliBody
-          body={bodyMaterial()}
-          dark={darkMaterial()}
-          glass={glassMaterial()}
-          metal={metalMaterial()}
-          livery={[tourLiveryTexture('left'), tourLiveryTexture('right')]}
-          tailDecal={tourTailTexture()}
-          rotorRef={rotorRef}
-          tailRotorRef={tailRotorRef}
-          beaconRef={beaconRef}
-          strobeRedRef={strobeRedRef}
-          strobeBlueRef={strobeBlueRef}
-        />
+        {clockwork ? (
+          <ClockworkBody
+            rotorRef={rotorRef}
+            tailRotorRef={tailRotorRef}
+            beaconRef={beaconRef}
+            strobeRedRef={strobeRedRef}
+            strobeBlueRef={strobeBlueRef}
+          />
+        ) : (
+          <HeliBody
+            body={bodyMaterial()}
+            dark={darkMaterial()}
+            glass={glassMaterial()}
+            metal={metalMaterial()}
+            livery={[tourLiveryTexture('left'), tourLiveryTexture('right')]}
+            tailDecal={tourTailTexture()}
+            rotorRef={rotorRef}
+            tailRotorRef={tailRotorRef}
+            beaconRef={beaconRef}
+            strobeRedRef={strobeRedRef}
+            strobeBlueRef={strobeBlueRef}
+          />
+        )}
         {/* Đèn pha rọi treo trên giá càng đáp trái */}
         <group position={[LAMP.x, LAMP.y, LAMP.z]} rotation={[0.3, 0.15, 0]}>
           <mesh material={darkMaterial()}>
